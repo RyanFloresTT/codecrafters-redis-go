@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -30,28 +32,92 @@ func main() {
 	}
 }
 
+// *1\r\n$4\r\nPING\r\n
+
+// 1 (number of arguments in the array)
+
+// 4 (length of the argument "PING")
+
+// PING (the argument itself)
+
+/*
+
+Step 1. Read the first line to determine the number of arguments in the array.
+
+Step 2. Read the subsequent lines to get the length and value of each argument.
+
+Step 3. Process each argument as needed (e.g., respond to PING with PONG).
+
+*/
+
 func handleConnection(c net.Conn) {
 	defer c.Close()
 
 	fmt.Println("Accepted a connection")
 
-	buf := make([]byte, 1024)
-
 	for {
-		go readFromConnection(c, buf)
+		go readFromConnection(c)
 	}
 }
 
-func readFromConnection(c net.Conn, buf []byte) (int, error) {
-	n, err := c.Read(buf)
+// *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
+
+func readFromConnection(c net.Conn) error {
+	const minBufSize = 1024
+
+	buf := make([]byte, minBufSize)
+
+	_, err := c.Read(buf)
 	if err != nil {
-		fmt.Println("Error reading from connection: ", err.Error())
+		fmt.Println("Error reading number of arguments: ", err.Error())
 		os.Exit(1)
 	}
 
-	fmt.Println("Read data from connection: ", string(buf[:n]))
+	message := string(buf[:])
+	i := strings.Index(message, "\r\n")
+	numArgs := (message[1:i])
 
-	c.Write([]byte("+PONG\r\n"))
+	numArgsInt, err := strconv.Atoi(numArgs)
+	if err != nil {
+		fmt.Println("Error converting number of arguments: ", err.Error())
+		os.Exit(1)
+	}
 
-	return n, err
+	fmt.Println("Number of arguments: ", numArgsInt)
+
+	args := make([]string, numArgsInt)
+
+	for j := 0; j < numArgsInt; j++ {
+		i += 2 // move past the previous \r\n
+
+		lengthEnd := strings.Index(message[i:], "\r\n")
+		if lengthEnd == -1 {
+			return fmt.Errorf("incomplete argument length")
+		}
+
+		byteLen := message[i : i+lengthEnd]
+		byteLenInt, err := strconv.Atoi(byteLen[1:])
+		if err != nil {
+			return err
+		}
+
+		i += lengthEnd + 2
+		args[j] = message[i : i+byteLenInt]
+		i += byteLenInt
+	}
+
+	fmt.Println("Arguments: ", args)
+
+	// write bulk strings ex. $5\r\napple\r\n
+	for j := 0; j < numArgsInt; j++ {
+		if args[j] == "PING" {
+			c.Write([]byte("+PONG\r\n"))
+		}
+
+		if args[j] == "ECHO" && j+1 < numArgsInt {
+			c.Write([]byte("$" + strconv.Itoa(len(args[j+1])) + "\r\n" + args[j+1] + "\r\n"))
+		}
+	}
+
+	return err
 }
