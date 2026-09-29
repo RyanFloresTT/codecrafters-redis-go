@@ -12,6 +12,8 @@ import (
 var _ = net.Listen
 var _ = os.Exit
 
+var getMap = map[string]string{}
+
 func main() {
 	fmt.Println("Starting the server...")
 
@@ -119,6 +121,28 @@ func readFromConnection(c net.Conn) error {
 
 		if args[j] == "ECHO" && j+1 < numArgsInt {
 			c.Write([]byte("$" + strconv.Itoa(len(args[j+1])) + "\r\n" + args[j+1] + "\r\n"))
+		}
+
+		if args[j] == "SET" {
+			if j+2 < numArgsInt {
+				getMap[args[j+1]] = args[j+2]
+				c.Write([]byte("+OK\r\n"))
+			} else {
+				c.Write([]byte("-ERR wrong number of arguments for 'SET' command\r\n"))
+			}
+		}
+
+		if args[j] == "GET" {
+			if j+1 < numArgsInt {
+				value, ok := getMap[args[j+1]]
+				if ok {
+					c.Write([]byte("$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"))
+				} else {
+					c.Write([]byte("$-1\r\n"))
+				}
+			} else {
+				c.Write([]byte("-ERR wrong number of arguments for 'GET' command\r\n"))
+			}
 		}
 	}
 
