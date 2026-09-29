@@ -6,13 +6,19 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
+
+type entry struct {
+	value     string
+	expiresAt time.Time // zero means no expiry
+}
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
 var _ = net.Listen
 var _ = os.Exit
 
-var getMap = map[string]string{}
+var getMap = map[string]entry{}
 
 func main() {
 	fmt.Println("Starting the server...")
@@ -114,6 +120,7 @@ func readFromConnection(c net.Conn) error {
 	fmt.Println("Arguments: ", args)
 
 	// write bulk strings ex. $5\r\napple\r\n
+
 	for j := 0; j < numArgsInt; j++ {
 		if args[j] == "PING" {
 			c.Write([]byte("+PONG\r\n"))
@@ -124,8 +131,29 @@ func readFromConnection(c net.Conn) error {
 		}
 
 		if args[j] == "SET" {
-			if j+2 < numArgsInt {
-				getMap[args[j+1]] = args[j+2]
+			if j+4 < numArgsInt {
+				switch args[j+3] {
+				case "EX":
+					expireSeconds, err := strconv.Atoi(args[j+4])
+					if err != nil {
+						c.Write([]byte("-ERR invalid expire time\r\n"))
+					} else {
+						getMap[args[j+1]] = entry{value: args[j+2], expiresAt: time.Now().Add(time.Duration(expireSeconds) * time.Second)}
+						c.Write([]byte("+OK\r\n"))
+					}
+				case "PX":
+					expireMilliseconds, err := strconv.Atoi(args[j+4])
+					if err != nil {
+						c.Write([]byte("-ERR invalid expire time\r\n"))
+					} else {
+						getMap[args[j+1]] = entry{value: args[j+2], expiresAt: time.Now().Add(time.Duration(expireMilliseconds) * time.Millisecond)}
+						c.Write([]byte("+OK\r\n"))
+					}
+				default:
+					c.Write([]byte("-ERR syntax error\r\n"))
+				}
+			} else if j+2 < numArgsInt {
+				getMap[args[j+1]] = entry{value: args[j+2]}
 				c.Write([]byte("+OK\r\n"))
 			} else {
 				c.Write([]byte("-ERR wrong number of arguments for 'SET' command\r\n"))
@@ -136,7 +164,15 @@ func readFromConnection(c net.Conn) error {
 			if j+1 < numArgsInt {
 				value, ok := getMap[args[j+1]]
 				if ok {
-					c.Write([]byte("$" + strconv.Itoa(len(value)) + "\r\n" + value + "\r\n"))
+					if !value.expiresAt.IsZero() && time.Now().After(value.expiresAt) {
+						delete(getMap, args[j+1])
+						ok = false
+					}
+					if ok {
+						c.Write([]byte("$" + strconv.Itoa(len(value.value)) + "\r\n" + value.value + "\r\n"))
+					} else {
+						c.Write([]byte("$-1\r\n"))
+					}
 				} else {
 					c.Write([]byte("$-1\r\n"))
 				}
