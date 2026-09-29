@@ -21,6 +21,10 @@ var LRange = Command{
 			return err
 		}
 
+		if start < 0 || end > len(lists[args[0]]) {
+			return c.SendArray([]string{})
+		}
+
 		err = c.SendArray(lists[args[0]][start : end+1])
 		return err
 	},
