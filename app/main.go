@@ -19,31 +19,39 @@ func main() {
 		os.Exit(1)
 	}
 
-	c, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
+	for {
+		c, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
 
+		go handleConnection(c)
+	}
+}
+
+func handleConnection(c net.Conn) {
 	defer c.Close()
 
 	fmt.Println("Accepted a connection")
 
 	buf := make([]byte, 1024)
 
-	_, err = c.Read(buf)
+	for {
+		go readFromConnection(c, buf)
+	}
+}
+
+func readFromConnection(c net.Conn, buf []byte) (int, error) {
+	n, err := c.Read(buf)
 	if err != nil {
 		fmt.Println("Error reading from connection: ", err.Error())
 		os.Exit(1)
 	}
 
-	fmt.Println("Read data from connection: ", string(buf))
+	fmt.Println("Read data from connection: ", string(buf[:n]))
 
-	if string(buf[:4]) == "PING" {
-		fmt.Println("Received PING command")
-	}
 	c.Write([]byte("+PONG\r\n"))
 
-	fmt.Println("Closing the connection")
-	c.Close()
+	return n, err
 }
