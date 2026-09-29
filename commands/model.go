@@ -8,9 +8,10 @@ type Command struct {
 }
 
 var Registry = map[string]Command{
-	"PING":  Ping,
-	"GET":   Get,
-	"SET":   Set,
-	"ECHO":  Echo,
-	"RPUSH": RPush,
+	"PING":   Ping,
+	"GET":    Get,
+	"SET":    Set,
+	"ECHO":   Echo,
+	"RPUSH":  RPush,
+	"LRANGE": LRange,
 }
