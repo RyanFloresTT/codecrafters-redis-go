@@ -56,7 +56,10 @@ func handleConnection(c net.Conn) {
 	fmt.Println("Accepted a connection")
 
 	for {
-		go readFromConnection(c)
+		if err := readFromConnection(c); err != nil {
+			fmt.Println("Error handling connection: ", err.Error())
+			return
+		}
 	}
 }
 
@@ -67,13 +70,13 @@ func readFromConnection(c net.Conn) error {
 
 	buf := make([]byte, minBufSize)
 
-	_, err := c.Read(buf)
+	n, err := c.Read(buf)
 	if err != nil {
-		fmt.Println("Error reading number of arguments: ", err.Error())
+		fmt.Println("Error reading from connection: ", err.Error())
 		os.Exit(1)
 	}
 
-	message := string(buf[:])
+	message := string(buf[:n])
 	i := strings.Index(message, "\r\n")
 	numArgs := (message[1:i])
 
