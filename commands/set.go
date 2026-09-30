@@ -4,21 +4,23 @@ import (
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
 var Set = Command{
 	Name: "SET",
 	Execute: func(connection net.Conn, args []string) error {
+		c := helpers.Connection{Conn: connection}
 		numArgs := len(args)
 		dictionary := GetMap()
-		err := error(nil)
 
 		switch numArgs {
 		case 2:
 			// Handle the case where only the key and value are provided
 
 			dictionary[args[0]] = entry{value: args[1]}
-			_, err = connection.Write([]byte("+OK\r\n"))
+			return c.Send("OK")
 
 		case 4:
 			// Handle the case where key/value and expiration are provided
@@ -27,28 +29,26 @@ var Set = Command{
 			case "EX": // Expiration time in seconds
 				expireSeconds, err := strconv.Atoi(args[3])
 				if err != nil {
-					_, err = connection.Write([]byte("-ERR invalid expire time\r\n"))
+					return c.SendError("ERR invalid expire time")
 				} else {
 					dictionary[args[0]] = entry{value: args[1], expiresAt: time.Now().Add(time.Duration(expireSeconds) * time.Second)}
-					_, err = connection.Write([]byte("+OK\r\n"))
+					return c.Send("OK")
 				}
 			case "PX": // Expiration time in milliseconds
 				expireMilliseconds, err := strconv.Atoi(args[3])
 				if err != nil {
-					_, err = connection.Write([]byte("-ERR invalid expire time\r\n"))
+					return c.SendError("ERR invalid expire time")
 				} else {
 					dictionary[args[0]] = entry{value: args[1], expiresAt: time.Now().Add(time.Duration(expireMilliseconds) * time.Millisecond)}
-					_, err = connection.Write([]byte("+OK\r\n"))
+					return c.Send("OK")
 				}
 			default:
-				_, err = connection.Write([]byte("-ERR syntax error\r\n"))
+				return c.SendError("ERR syntax error")
 			}
 
 		default:
 			// Handle the default case
-			_, err = connection.Write([]byte("-ERR wrong number of arguments for 'SET' command\r\n"))
+			return c.SendError("ERR wrong number of arguments for 'SET' command")
 		}
-
-		return err
 	},
 }

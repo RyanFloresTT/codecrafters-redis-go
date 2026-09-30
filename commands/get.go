@@ -2,16 +2,17 @@ package commands
 
 import (
 	"net"
-	"strconv"
 	"time"
+
+	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
 var Get = Command{
 	Name: "GET",
 	Execute: func(connection net.Conn, args []string) error {
+		c := helpers.Connection{Conn: connection}
 		numArgs := len(args)
 		dictionary := GetMap()
-		err := error(nil)
 
 		if numArgs > 0 {
 			value, ok := dictionary[args[0]]
@@ -21,17 +22,15 @@ var Get = Command{
 					ok = false
 				}
 				if ok {
-					connection.Write([]byte("$" + strconv.Itoa(len(value.value)) + "\r\n" + value.value + "\r\n"))
+					return c.SendBulk(value.value)
 				} else {
-					connection.Write([]byte("$-1\r\n"))
+					return c.SendNull()
 				}
 			} else {
-				connection.Write([]byte("$-1\r\n"))
+				return c.SendNull()
 			}
 		} else {
-			connection.Write([]byte("-ERR wrong number of arguments for 'GET' command\r\n"))
+			return c.SendError("ERR wrong number of arguments for 'GET' command")
 		}
-
-		return err
 	},
 }

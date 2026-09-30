@@ -3,7 +3,8 @@ package commands
 import (
 	"fmt"
 	"net"
-	"strconv"
+
+	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
 var LPush = Command{
@@ -20,7 +21,7 @@ var LPush = Command{
 
 		fmt.Println(lists[key])
 
-		_, err = connection.Write([]byte(":" + strconv.Itoa(len(lists[key])) + "\r\n"))
+		err = (&helpers.Connection{Conn: connection}).SendArrayLength(len(lists[key]))
 
 		return err
 	},
