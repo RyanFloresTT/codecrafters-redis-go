@@ -24,6 +24,11 @@ func (c Connection) SendNull() error {
 	return err
 }
 
+func (c Connection) SendNullArray() error {
+	_, err := fmt.Fprint(c.Conn, "*-1\r\n")
+	return err
+}
+
 func (c Connection) SendError(message string) error {
 	_, err := fmt.Fprintf(c.Conn, "-%s\r\n", message)
 	return err
