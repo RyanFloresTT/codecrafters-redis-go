@@ -15,8 +15,6 @@ var dictionary = commands.GetMap()
 func handleConnection(c net.Conn) {
 	defer c.Close()
 
-	fmt.Println("Accepted a connection")
-
 	for {
 		if err := readFromConnection(c); err != nil {
 			fmt.Println("Error handling connection: ", err.Error())
@@ -46,8 +44,6 @@ func readFromConnection(c net.Conn) error {
 		os.Exit(1)
 	}
 
-	fmt.Println("Number of arguments: ", numArgsInt)
-
 	args := make([]string, numArgsInt)
 
 	for j := 0; j < numArgsInt; j++ {
@@ -70,8 +66,6 @@ func readFromConnection(c net.Conn) error {
 	}
 
 	fmt.Println("Arguments: ", args)
-
-	// write bulk strings ex. $5\r\napple\r\n
 
 	err = commands.Registry[args[0]].Execute(c, args[1:])
 

@@ -14,16 +14,6 @@ var BLPop = Command{
 		key := args[0]
 		timeout := args[1]
 
-		if _, exists := lists[key]; !exists {
-			err = (&helpers.Connection{Conn: connection}).SendNull()
-			return err
-		}
-
-		if len(lists[key]) == 0 {
-			err = (&helpers.Connection{Conn: connection}).SendNull()
-			return err
-		}
-
 		for len(lists[key]) == 0 {
 		}
 
