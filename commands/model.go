@@ -16,4 +16,5 @@ var Registry = map[string]Command{
 	"LRANGE": LRange,
 	"LPUSH":  LPush,
 	"LLEN":   Llen,
+	"LPOP":   LPop,
 }
