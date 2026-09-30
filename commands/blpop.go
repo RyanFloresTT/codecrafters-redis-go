@@ -32,7 +32,7 @@ var BLPop = Command{
 		poppedValue := lists[key][0]
 		lists[key] = lists[key][1:]
 
-		err = (&helpers.Connection{Conn: connection}).SendBulk(poppedValue)
+		err = (&helpers.Connection{Conn: connection}).SendArray([]string{key, poppedValue})
 		return err
 	},
 }
