@@ -26,7 +26,6 @@ func XAdd(c helpers.Connection, args []string) error {
 	key := args[0]
 	id := args[1]
 	values := []kvp{}
-
 	// id validation
 	idParts := strings.Split(id, "-")
 	if len(idParts) != 2 {
@@ -36,18 +35,20 @@ func XAdd(c helpers.Connection, args []string) error {
 	ms := idParts[0]
 	seq := idParts[1]
 
-	lastEntry := streamMap[key][len(streamMap[key])-1]
-
-	lastEntryIDParts := strings.Split(lastEntry.id, "-")
-	lastEntryMS := lastEntryIDParts[0]
-	lastEntrySeq := lastEntryIDParts[1]
-
-	if ms < lastEntryMS {
-		return c.SendError("ID specified in XADD is equal or smaller than the target stream top item")
+	if ms == "0" && seq == "0" {
+		return c.SendError("The ID specified in XADD must be greater than 0-0")
 	}
 
-	if ms == lastEntryMS && seq <= lastEntrySeq {
-		return c.SendError("ERR The ID specified in XADD must be greater than " + lastEntry.id + "-" + lastEntrySeq)
+	if len(streamMap[key]) != 0 {
+
+		lastEntry := streamMap[key][len(streamMap[key])-1]
+		lastEntryIDParts := strings.Split(lastEntry.id, "-")
+		lastEntryMS := lastEntryIDParts[0]
+		lastEntrySeq := lastEntryIDParts[1]
+
+		if ms < lastEntryMS || (ms == lastEntryMS && seq <= lastEntrySeq) {
+			return c.SendError("The ID specified in XADD is equal or smaller than the target stream top item")
+		}
 	}
 
 	for i := 2; i < len(args); i += 2 {
