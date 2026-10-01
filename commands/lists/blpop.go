@@ -1,7 +1,6 @@
 package lists
 
 import (
-	"net"
 	"strconv"
 	"time"
 
@@ -10,7 +9,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func BLPop(connection net.Conn, args []string) error {
+func BLPop(c helpers.Connection, args []string) error {
 	err := error(nil)
 	key := args[0]
 	timeout, _ := strconv.ParseFloat(args[1], 64)
@@ -21,7 +20,7 @@ func BLPop(connection net.Conn, args []string) error {
 
 	t := timer.NewTimer(time.Duration(timeout) * time.Millisecond)
 	t.Start(func() {
-		(&helpers.Connection{Conn: connection}).SendNullArray()
+		c.SendNullArray()
 	})
 
 	listsMu.Lock()
@@ -35,6 +34,6 @@ func BLPop(connection net.Conn, args []string) error {
 
 	listsMu.Unlock()
 
-	err = (&helpers.Connection{Conn: connection}).SendArray([]string{key, poppedValue})
+	err = c.SendArray([]string{key, poppedValue})
 	return err
 }

@@ -1,14 +1,12 @@
 package strings
 
 import (
-	"net"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func Get(connection net.Conn, args []string) error {
-	c := helpers.Connection{Conn: connection}
+func Get(c helpers.Connection, args []string) error {
 	numArgs := len(args)
 	dictionary := GetMap()
 

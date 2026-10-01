@@ -1,14 +1,12 @@
 package lists
 
 import (
-	"net"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func LRange(connection net.Conn, args []string) error {
-	c := helpers.Connection{Conn: connection}
+func LRange(c helpers.Connection, args []string) error {
 
 	listsMu.Lock()
 	defer listsMu.Unlock()

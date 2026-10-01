@@ -1,13 +1,12 @@
 package lists
 
 import (
-	"net"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func LPop(connection net.Conn, args []string) error {
+func LPop(c helpers.Connection, args []string) error {
 	err := error(nil)
 	key := args[0]
 
@@ -15,12 +14,12 @@ func LPop(connection net.Conn, args []string) error {
 	defer listsMu.Unlock()
 
 	if _, exists := lists[key]; !exists {
-		err = (&helpers.Connection{Conn: connection}).SendNull()
+		err = c.SendNull()
 		return err
 	}
 
 	if len(lists[key]) == 0 {
-		err = (&helpers.Connection{Conn: connection}).SendNull()
+		err = c.SendNull()
 		return err
 	}
 
@@ -35,13 +34,13 @@ func LPop(connection net.Conn, args []string) error {
 			poppedValues = append(poppedValues, poppedValue)
 		}
 
-		err = (&helpers.Connection{Conn: connection}).SendArray(poppedValues)
+		err = c.SendArray(poppedValues)
 		return err
 	} else {
 		poppedValue := lists[key][0]
 		lists[key] = lists[key][1:]
 
-		err = (&helpers.Connection{Conn: connection}).SendBulk(poppedValue)
+		err = c.SendBulk(poppedValue)
 	}
 
 	return err

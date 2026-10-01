@@ -1,11 +1,9 @@
 package basic
 
 import (
-	"net"
-
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func Ping(connection net.Conn, args []string) error {
-	return (helpers.Connection{Conn: connection}).Send("PONG")
+func Ping(c helpers.Connection, args []string) error {
+	return c.Send("PONG")
 }

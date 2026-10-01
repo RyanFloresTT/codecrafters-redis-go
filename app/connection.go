@@ -8,9 +8,8 @@ import (
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/commands"
+	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
-
-var dictionary = commands.GetMap()
 
 func handleConnection(c net.Conn) {
 	defer c.Close()
@@ -67,7 +66,9 @@ func readFromConnection(c net.Conn) error {
 
 	fmt.Println("Arguments: ", args)
 
-	err = commands.Registry[args[0]].Execute(c, args[1:])
+	connection := helpers.Connection{Conn: c}
+
+	err = commands.Registry[args[0]].Execute(connection, args[1:])
 
 	return err
 }
