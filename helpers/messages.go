@@ -30,7 +30,7 @@ func (c Connection) SendNullArray() error {
 }
 
 func (c Connection) SendError(message string) error {
-	_, err := fmt.Fprintf(c.Conn, "-%s\r\n", message)
+	_, err := fmt.Fprintf(c.Conn, "-ERR %s\r\n", message)
 	return err
 }
 

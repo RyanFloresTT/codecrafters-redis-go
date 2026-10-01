@@ -1,6 +1,8 @@
 package streams
 
 import (
+	"strings"
+
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
@@ -24,6 +26,29 @@ func XAdd(c helpers.Connection, args []string) error {
 	key := args[0]
 	id := args[1]
 	values := []kvp{}
+
+	// id validation
+	idParts := strings.Split(id, "-")
+	if len(idParts) != 2 {
+		return c.SendError("invalid stream ID")
+	}
+
+	ms := idParts[0]
+	seq := idParts[1]
+
+	lastEntry := streamMap[key][len(streamMap[key])-1]
+
+	lastEntryIDParts := strings.Split(lastEntry.id, "-")
+	lastEntryMS := lastEntryIDParts[0]
+	lastEntrySeq := lastEntryIDParts[1]
+
+	if ms < lastEntryMS {
+		return c.SendError("ID specified in XADD is equal or smaller than the target stream top item")
+	}
+
+	if ms == lastEntryMS && seq <= lastEntrySeq {
+		return c.SendError("ERR The ID specified in XADD must be greater than " + lastEntry.id + "-" + lastEntrySeq)
+	}
 
 	for i := 2; i < len(args); i += 2 {
 		values = append(values, kvp{
