@@ -4,6 +4,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/commands/basic"
 	"github.com/codecrafters-io/redis-starter-go/commands/lists"
 	"github.com/codecrafters-io/redis-starter-go/commands/strings"
+	"github.com/codecrafters-io/redis-starter-go/commands/types"
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
@@ -23,4 +24,5 @@ var Registry = map[string]Command{
 	"LLEN":   {Name: "LLEN", Execute: lists.Llen},
 	"LPOP":   {Name: "LPOP", Execute: lists.LPop},
 	"BLPOP":  {Name: "BLPOP", Execute: lists.BLPop},
+	"TYPE":   {Name: "TYPE", Execute: types.Type},
 }
