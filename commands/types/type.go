@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/commands/streams"
 	"github.com/codecrafters-io/redis-starter-go/commands/strings"
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
@@ -26,10 +27,12 @@ func Type(c helpers.Connection, args []string) error {
 	key := args[0]
 	valueType := None
 
-	if _, ok := strings.GetMap()[key]; !ok {
-		valueType = None
-	} else {
+	if _, ok := strings.GetMap()[key]; ok {
 		valueType = String
+	} else if _, ok := streams.GetMap()[key]; ok {
+		valueType = Stream
+	} else {
+		valueType = None
 	}
 
 	return c.Send(valueType.String())

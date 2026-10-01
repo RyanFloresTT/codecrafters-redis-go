@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/codecrafters-io/redis-starter-go/commands/basic"
 	"github.com/codecrafters-io/redis-starter-go/commands/lists"
+	"github.com/codecrafters-io/redis-starter-go/commands/streams"
 	"github.com/codecrafters-io/redis-starter-go/commands/strings"
 	"github.com/codecrafters-io/redis-starter-go/commands/types"
 	"github.com/codecrafters-io/redis-starter-go/helpers"
@@ -25,4 +26,5 @@ var Registry = map[string]Command{
 	"LPOP":   {Name: "LPOP", Execute: lists.LPop},
 	"BLPOP":  {Name: "BLPOP", Execute: lists.BLPop},
 	"TYPE":   {Name: "TYPE", Execute: types.Type},
+	"XADD":   {Name: "XADD", Execute: streams.XAdd},
 }
