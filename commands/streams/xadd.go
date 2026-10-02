@@ -3,6 +3,7 @@ package streams
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
@@ -16,46 +17,46 @@ func GetMap() map[string][]entry {
 func XAdd(c helpers.Connection, args []string) error {
 	key := args[0]
 	idString := args[1]
-	values := []kvp{}
-	id := id{}
 
-	idParts := strings.Split(idString, "-")
-	if len(idParts) != 2 {
-		return c.SendError("invalid stream ID")
-	}
+	newEntry := entry{}
 
 	mapHasEntries := len(streamMap[key]) != 0
-	id.ms = idParts[0]
-	seqStr := idParts[1]
 
-	lastEntry := entry{}
+	var lastEntry *entry
 	if mapHasEntries {
-		lastEntry = streamMap[key][len(streamMap[key])-1]
+		lastEntry = &streamMap[key][len(streamMap[key])-1]
 	}
 
-	if id.ms == "0" && seqStr == "0" {
-		return c.SendError("The ID specified in XADD must be greater than 0-0")
+	// Case 3 : Auto-Generate Full Id
+	if idString == "*" {
+		GenerateNewId(&newEntry.id, lastEntry)
+
+		AddEntry(&newEntry.id, key, args)
+		return c.SendBulk(newEntry.id.String())
 	}
 
-	if seqStr != "*" {
-		id.seq, _ = strconv.Atoi(idParts[1])
+	// Case 1 : Auto-Generate Sequence
+	// Case 2 : Validate and Parse Provided Id
+	if err := ValidateAndParseId(&newEntry, idString, mapHasEntries, lastEntry); err != nil {
+		return c.SendError(err.Error())
+	}
+
+	AddEntry(&newEntry.id, key, args)
+	return c.SendBulk(newEntry.id.String())
+}
+
+func GenerateNewId(id *id, lastEntry *entry) {
+	id.ms = strconv.FormatInt(time.Now().UnixMilli(), 10)
+
+	if lastEntry != nil && lastEntry.id.ms == id.ms {
+		id.seq = lastEntry.id.seq + 1
 	} else {
-		if mapHasEntries {
-			if lastEntry.id.ms == id.ms {
-				id.seq = lastEntry.id.seq + 1
-			} else {
-				id.seq = 0
-			}
-		} else {
-			id.seq = 1
-		}
+		id.seq = 0
 	}
+}
 
-	if mapHasEntries {
-		if id.ms < lastEntry.id.ms || (id.ms == lastEntry.id.ms && id.seq <= lastEntry.id.seq) {
-			return c.SendError("The ID specified in XADD is equal or smaller than the target stream top item")
-		}
-	}
+func AddEntry(id *id, key string, args []string) {
+	values := []kvp{}
 
 	for i := 2; i < len(args); i += 2 {
 		values = append(values, kvp{
@@ -65,9 +66,44 @@ func XAdd(c helpers.Connection, args []string) error {
 	}
 
 	streamMap[key] = append(streamMap[key], entry{
-		id:     id,
+		id:     *id,
 		values: values,
 	})
+}
 
-	return c.SendBulk(id.String())
+func ValidateAndParseId(newEntry *entry, idString string, mapHasEntries bool, lastEntry *entry) *streamError {
+	idParts := strings.Split(idString, "-")
+
+	if len(idParts) != 2 {
+		return &streamError{message: InvalidStreamIDError}
+	}
+
+	newEntry.id.ms = idParts[0]
+	seqStr := idParts[1]
+
+	if newEntry.id.ms == "0" && seqStr == "0" {
+		return &streamError{message: XAddIDGreaterThanZeroError}
+	}
+
+	if seqStr != "*" {
+		newEntry.id.seq, _ = strconv.Atoi(idParts[1])
+	} else {
+		if mapHasEntries {
+			if lastEntry.id.ms == newEntry.id.ms {
+				newEntry.id.seq = lastEntry.id.seq + 1
+			} else {
+				newEntry.id.seq = 0
+			}
+		} else {
+			newEntry.id.seq = 1
+		}
+	}
+
+	if mapHasEntries {
+		if newEntry.id.ms < lastEntry.id.ms || (newEntry.id.ms == lastEntry.id.ms && newEntry.id.seq <= lastEntry.id.seq) {
+			return &streamError{message: XAddIDSmallerThanTopError}
+		}
+	}
+
+	return nil
 }
