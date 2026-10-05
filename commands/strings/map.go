@@ -16,3 +16,11 @@ func GetMap() map[string]entry {
 func Entry() entry {
 	return entry{}
 }
+
+func GetEntry(key string) (entry, bool) {
+	value, ok := getMap[key]
+	if !ok {
+		return entry{}, false
+	}
+	return value, true
+}

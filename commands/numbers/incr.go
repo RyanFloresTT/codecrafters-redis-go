@@ -1,6 +1,7 @@
 package numbers
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/commands/strings"
@@ -8,18 +9,23 @@ import (
 )
 
 func Incr(c helpers.Connection, args []string) error {
-	// Implementation for INCR command goes here
-	dictionary := strings.GetMap()
-	entry := dictionary[args[0]]
+	entry, ok := strings.GetEntry(args[0])
 
-	value, err := strconv.Atoi(entry.Value)
-	if err != nil {
-		return c.SendError("ERR value is not an integer or out of range")
+	if !ok {
+		entry := strings.Entry()
+		entry.Value = "1"
+		strings.GetMap()[args[0]] = entry
+		return helpers.Integer(1).SendTo(c)
 	}
 
-	data := helpers.Integer(value + 1)
+	value, _ := strconv.Atoi(entry.Value)
 
+	fmt.Println(value)
+
+	data := helpers.Integer(value + 1)
 	entry.Value = strconv.Itoa(value + 1)
-	dictionary[args[0]] = entry
+
+	strings.GetMap()[args[0]] = entry
+
 	return data.SendTo(c)
 }
