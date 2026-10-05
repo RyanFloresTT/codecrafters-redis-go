@@ -3,12 +3,15 @@ package streams
 import (
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
 var streamMap = make(map[string][]entry)
+var mapMu sync.Mutex
+var mapCond = sync.Cond{L: &mapMu}
 
 func GetMap() map[string][]entry {
 	return streamMap
@@ -20,28 +23,31 @@ func XAdd(c helpers.Connection, args []string) error {
 
 	newEntry := entry{}
 
-	mapHasEntries := len(streamMap[key]) != 0
+	validationErr := func() *streamError {
+		mapMu.Lock()
+		defer mapMu.Unlock()
 
-	var lastEntry *entry
-	if mapHasEntries {
-		lastEntry = &streamMap[key][len(streamMap[key])-1]
-	}
+		mapHasEntries := len(streamMap[key]) != 0
 
-	// Case 3 : Auto-Generate Full Id
-	if idString == "*" {
-		GenerateNewId(&newEntry.id, lastEntry)
+		var lastEntry *entry
+		if mapHasEntries {
+			lastEntry = &streamMap[key][len(streamMap[key])-1]
+		}
+
+		if idString == "*" {
+			GenerateNewId(&newEntry.id, lastEntry)
+		} else if err := ValidateAndParseId(&newEntry, idString, mapHasEntries, lastEntry); err != nil {
+			return err
+		}
 
 		AddEntry(&newEntry.id, key, args)
-		return c.SendBulk(newEntry.id.String())
-	}
+		return nil
+	}()
 
-	// Case 1 : Auto-Generate Sequence
-	// Case 2 : Validate and Parse Provided Id
-	if err := ValidateAndParseId(&newEntry, idString, mapHasEntries, lastEntry); err != nil {
+	if err := validationErr; err != nil {
 		return c.SendError(err.Error())
 	}
 
-	AddEntry(&newEntry.id, key, args)
 	return c.SendBulk(newEntry.id.String())
 }
 
@@ -69,6 +75,8 @@ func AddEntry(id *id, key string, args []string) {
 		id:     *id,
 		values: values,
 	})
+
+	mapCond.Broadcast()
 }
 
 func ValidateAndParseId(newEntry *entry, idString string, mapHasEntries bool, lastEntry *entry) *streamError {
