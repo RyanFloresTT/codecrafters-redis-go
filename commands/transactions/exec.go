@@ -10,5 +10,8 @@ func Exec(c helpers.Connection, args []string) error {
 	}
 
 	IsTransaction = false
-	return c.Send("OK")
+
+	data := make(helpers.Array, len(queued))
+
+	return data.SendTo(c)
 }
