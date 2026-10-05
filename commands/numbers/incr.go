@@ -18,7 +18,11 @@ func Incr(c helpers.Connection, args []string) error {
 		return helpers.Integer(1).SendTo(c)
 	}
 
-	value, _ := strconv.Atoi(entry.Value)
+	value, err := strconv.Atoi(entry.Value)
+
+	if err != nil {
+		return c.SendError("value is not an integer or out of range")
+	}
 
 	fmt.Println(value)
 
