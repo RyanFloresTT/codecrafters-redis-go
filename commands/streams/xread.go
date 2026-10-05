@@ -7,30 +7,39 @@ import (
 )
 
 func XRead(c helpers.Connection, args []string) error {
-	if len(args) != 3 {
+	if len(args) < 3 || (len(args)-1)%2 != 0 {
 		return c.SendError("wrong number of arguments for 'xread' command")
 	}
 	if !strings.EqualFold(args[0], "streams") {
 		return c.SendError("syntax error")
 	}
-	key := args[1]
 
-	start, err := parseRangeID(args[2], false)
-	if err != nil {
-		return c.SendError(err.Error())
-	}
+	numOfStreams := (len(args) - 1) / 2
+	keys := args[1 : 1+numOfStreams]
+	ids := args[1+numOfStreams:]
+	response := helpers.Array{}
 
-	data := helpers.Array{}
-	for _, item := range streamMap[key] {
-		if rangeIDBefore(start, item.id) {
-			data = append(data, item.RESP())
+	for index, key := range keys {
+		start, _, err := tryParseRangeID(ids[index])
+		if err != nil {
+			return c.SendError(err.Error())
+		}
+
+		data := helpers.Array{}
+
+		for _, item := range streamMap[key] {
+			if rangeIDBefore(start, item.id) {
+				data = append(data, item.RESP())
+			}
+		}
+
+		if len(data) > 0 {
+			response = append(response, helpers.Array{helpers.BulkString(key), data})
 		}
 	}
-	if len(data) == 0 {
+
+	if len(response) == 0 {
 		return c.SendNullArray()
 	}
-
-	return (helpers.Array{
-		helpers.Array{helpers.BulkString(key), data},
-	}).SendTo(c)
+	return response.SendTo(c)
 }
