@@ -42,6 +42,15 @@ func XRead(c helpers.Connection, args []string) error {
 		defer timer.Stop()
 	}
 
+	if ids[0] == "$" {
+		lastID, ok := GetLastID(keys[0])
+		if ok {
+			ids[0] = lastID.String()
+		} else {
+			ids[0] = "0-0"
+		}
+	}
+
 	getDataErr := func() *streamError {
 		mapMu.Lock()
 		defer mapMu.Unlock()

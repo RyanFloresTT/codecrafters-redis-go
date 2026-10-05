@@ -17,6 +17,7 @@ func tryParseRangeID(arg string) (id, bool, error) {
 	if arg == "+" {
 		return id{ms: math.MaxInt64, seq: math.MaxInt}, true, nil
 	}
+
 	msPart, seqPart, hasSequence := strings.Cut(arg, "-")
 	ms, err := strconv.ParseInt(msPart, 10, 64)
 	if err != nil || ms < 0 {

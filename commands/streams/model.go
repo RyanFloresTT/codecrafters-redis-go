@@ -35,3 +35,12 @@ type id struct {
 func (i id) String() string {
 	return strconv.FormatInt(i.ms, 10) + "-" + strconv.Itoa(i.seq)
 }
+
+func GetLastID(key string) (id, bool) {
+	stream := streamMap[key]
+	if len(stream) == 0 {
+		return id{0, 0}, false
+	}
+	lastItem := stream[len(stream)-1]
+	return lastItem.id, true
+}
