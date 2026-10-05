@@ -46,7 +46,7 @@ func XAdd(c helpers.Connection, args []string) error {
 }
 
 func GenerateNewId(id *id, lastEntry *entry) {
-	id.ms = strconv.FormatInt(time.Now().UnixMilli(), 10)
+	id.ms = time.Now().UnixMilli()
 
 	if lastEntry != nil && lastEntry.id.ms == id.ms {
 		id.seq = lastEntry.id.seq + 1
@@ -78,10 +78,10 @@ func ValidateAndParseId(newEntry *entry, idString string, mapHasEntries bool, la
 		return &streamError{message: InvalidStreamIDError}
 	}
 
-	newEntry.id.ms = idParts[0]
+	newEntry.id.ms, _ = strconv.ParseInt(idParts[0], 10, 64)
 	seqStr := idParts[1]
 
-	if newEntry.id.ms == "0" && seqStr == "0" {
+	if newEntry.id.ms == 0 && seqStr == "0" {
 		return &streamError{message: XAddIDGreaterThanZeroError}
 	}
 

@@ -27,4 +27,5 @@ var Registry = map[string]Command{
 	"BLPOP":  {Name: "BLPOP", Execute: lists.BLPop},
 	"TYPE":   {Name: "TYPE", Execute: types.Type},
 	"XADD":   {Name: "XADD", Execute: streams.XAdd},
+	"XRANGE": {Name: "XRANGE", Execute: streams.XRange},
 }

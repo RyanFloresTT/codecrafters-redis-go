@@ -1,10 +1,25 @@
 package streams
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/codecrafters-io/redis-starter-go/helpers"
+)
 
 type entry struct {
 	id     id
 	values []kvp
+}
+
+func (item entry) RESP() helpers.Value {
+	fields := make(helpers.Array, 0, len(item.values)*2)
+	for _, pair := range item.values {
+		fields = append(fields, helpers.BulkString(pair.key), helpers.BulkString(pair.value))
+	}
+	return helpers.Array{
+		helpers.BulkString(item.id.String()),
+		fields,
+	}
 }
 
 type kvp struct {
@@ -13,10 +28,10 @@ type kvp struct {
 }
 
 type id struct {
-	ms  string
+	ms  int64
 	seq int
 }
 
 func (i id) String() string {
-	return i.ms + "-" + strconv.Itoa(i.seq)
+	return strconv.FormatInt(i.ms, 10) + "-" + strconv.Itoa(i.seq)
 }
