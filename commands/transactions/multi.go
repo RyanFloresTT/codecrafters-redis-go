@@ -1,10 +1,12 @@
 package transactions
 
 import (
+	"net"
+
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-var IsTransaction bool
+var ClientTransactions = make(map[net.Addr]bool)
 
 type CommandFunc func(helpers.Connection, []string) error
 
@@ -16,7 +18,7 @@ type queuedCommand struct {
 var queued []queuedCommand
 
 func Multi(c helpers.Connection, args []string) error {
-	IsTransaction = true
+	ClientTransactions[c.Conn.RemoteAddr()] = true
 	return c.Send("OK")
 }
 

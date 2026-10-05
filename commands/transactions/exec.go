@@ -5,11 +5,11 @@ import (
 )
 
 func Exec(c helpers.Connection, args []string) error {
-	if !IsTransaction {
+	if !ClientTransactions[c.RemoteAddr()] {
 		return c.SendError("EXEC without MULTI")
 	}
 
-	IsTransaction = false
+	ClientTransactions[c.RemoteAddr()] = false
 
 	data := make(helpers.Array, len(queued))
 

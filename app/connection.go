@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/commands"
+	"github.com/codecrafters-io/redis-starter-go/commands/transactions"
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
@@ -68,7 +69,14 @@ func readFromConnection(c net.Conn) error {
 
 	connection := helpers.Connection{Conn: c}
 
-	err = commands.Registry[args[0]].Execute(connection, args[1:])
+	command := commands.Registry[args[0]]
+
+	if !transactions.ClientTransactions[connection.RemoteAddr()] || strings.ToUpper(command.Name) == "EXEC" {
+		command.Execute(connection, args[1:])
+	} else {
+		transactions.AddToQueue(command.Execute, args[1:])
+		return connection.Send("QUEUED")
+	}
 
 	return err
 }
