@@ -33,6 +33,10 @@ func XRange(c helpers.Connection, args []string) error {
 }
 
 func parseRangeID(value string, upperBound bool) (id, error) {
+	if value == "-" {
+		return id{0, 0}, nil
+	}
+
 	msPart, seqPart, hasSequence := strings.Cut(value, "-")
 	ms, err := strconv.ParseInt(msPart, 10, 64)
 	if err != nil || ms < 0 {
