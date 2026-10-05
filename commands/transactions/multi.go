@@ -30,6 +30,18 @@ func Multi(c helpers.Connection, args []string) (helpers.Value, error) {
 	return helpers.SimpleString("OK"), nil
 }
 
+func Discard(c helpers.Connection, args []string) (helpers.Value, error) {
+	clientsMu.Lock()
+	defer clientsMu.Unlock()
+
+	if _, ok := clients[c.RemoteAddr()]; ok {
+		delete(clients, c.RemoteAddr())
+		return helpers.SimpleString("OK"), nil
+	}
+
+	return helpers.Error("DISCARD without MULTI"), nil
+}
+
 func IsActive(c helpers.Connection) bool {
 	clientsMu.Lock()
 	defer clientsMu.Unlock()
