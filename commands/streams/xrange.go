@@ -44,19 +44,19 @@ func parseRangeID(value string, upperBound bool) (id, error) {
 	msPart, seqPart, hasSequence := strings.Cut(value, "-")
 	ms, err := strconv.ParseInt(msPart, 10, 64)
 	if err != nil || ms < 0 {
-		return id{}, &streamError{message: InvalidStreamIDError}
+		return id{}, &streamError{InvalidStreamIDError}
 	}
 
 	sequence := 0
 	if hasSequence {
 		sequence, err = strconv.Atoi(seqPart)
 		if err != nil || sequence < 0 {
-			return id{}, &streamError{message: InvalidStreamIDError}
+			return id{}, &streamError{InvalidStreamIDError}
 		}
 	} else if upperBound {
 		sequence = math.MaxInt
 	}
-	return id{ms: ms, seq: sequence}, nil
+	return id{ms, sequence}, nil
 }
 
 func rangeIDBefore(left, right id) bool {

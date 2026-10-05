@@ -28,4 +28,5 @@ var Registry = map[string]Command{
 	"TYPE":   {Name: "TYPE", Execute: types.Type},
 	"XADD":   {Name: "XADD", Execute: streams.XAdd},
 	"XRANGE": {Name: "XRANGE", Execute: streams.XRange},
+	"XREAD":  {Name: "XREAD", Execute: streams.XRead},
 }
