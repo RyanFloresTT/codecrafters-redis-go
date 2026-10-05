@@ -3,8 +3,8 @@ package strings
 import "time"
 
 type entry struct {
-	value     string
-	expiresAt time.Time // zero means no expiry
+	Value     string
+	ExpiresAt time.Time // zero means no expiry
 }
 
 var getMap = map[string]entry{}

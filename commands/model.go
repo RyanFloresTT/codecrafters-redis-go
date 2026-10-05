@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/codecrafters-io/redis-starter-go/commands/basic"
 	"github.com/codecrafters-io/redis-starter-go/commands/lists"
+	"github.com/codecrafters-io/redis-starter-go/commands/numbers"
 	"github.com/codecrafters-io/redis-starter-go/commands/streams"
 	"github.com/codecrafters-io/redis-starter-go/commands/strings"
 	"github.com/codecrafters-io/redis-starter-go/commands/types"
@@ -29,4 +30,5 @@ var Registry = map[string]Command{
 	"XADD":   {Name: "XADD", Execute: streams.XAdd},
 	"XRANGE": {Name: "XRANGE", Execute: streams.XRange},
 	"XREAD":  {Name: "XREAD", Execute: streams.XRead},
+	"INCR":   {Name: "INCR", Execute: numbers.Incr},
 }

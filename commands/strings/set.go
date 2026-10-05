@@ -15,7 +15,7 @@ func Set(c helpers.Connection, args []string) error {
 	case 2:
 		// Handle the case where only the key and value are provided
 
-		dictionary[args[0]] = entry{value: args[1]}
+		dictionary[args[0]] = entry{Value: args[1]}
 		return c.Send("OK")
 
 	case 4:
@@ -27,7 +27,7 @@ func Set(c helpers.Connection, args []string) error {
 			if err != nil {
 				return c.SendError("ERR invalid expire time")
 			} else {
-				dictionary[args[0]] = entry{value: args[1], expiresAt: time.Now().Add(time.Duration(expireSeconds) * time.Second)}
+				dictionary[args[0]] = entry{Value: args[1], ExpiresAt: time.Now().Add(time.Duration(expireSeconds) * time.Second)}
 				return c.Send("OK")
 			}
 		case "PX": // Expiration time in milliseconds
@@ -35,7 +35,7 @@ func Set(c helpers.Connection, args []string) error {
 			if err != nil {
 				return c.SendError("ERR invalid expire time")
 			} else {
-				dictionary[args[0]] = entry{value: args[1], expiresAt: time.Now().Add(time.Duration(expireMilliseconds) * time.Millisecond)}
+				dictionary[args[0]] = entry{Value: args[1], ExpiresAt: time.Now().Add(time.Duration(expireMilliseconds) * time.Millisecond)}
 				return c.Send("OK")
 			}
 		default:

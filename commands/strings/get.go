@@ -13,12 +13,12 @@ func Get(c helpers.Connection, args []string) error {
 	if numArgs > 0 {
 		value, ok := dictionary[args[0]]
 		if ok {
-			if !value.expiresAt.IsZero() && time.Now().After(value.expiresAt) {
+			if !value.ExpiresAt.IsZero() && time.Now().After(value.ExpiresAt) {
 				delete(dictionary, args[0])
 				ok = false
 			}
 			if ok {
-				return c.SendBulk(value.value)
+				return c.SendBulk(value.Value)
 			} else {
 				return c.SendNull()
 			}
