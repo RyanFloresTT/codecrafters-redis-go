@@ -6,25 +6,28 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func LPop(c helpers.Connection, args []string) error {
-	err := error(nil)
+func LPop(c helpers.Connection, args []string) (helpers.Value, error) {
+	if len(args) == 0 || len(args) > 2 {
+		return helpers.Error("wrong number of arguments for 'lpop' command"), nil
+	}
 	key := args[0]
 
 	listsMu.Lock()
 	defer listsMu.Unlock()
 
 	if _, exists := lists[key]; !exists {
-		err = c.SendNull()
-		return err
+		return helpers.NullBulk{}, nil
 	}
 
 	if len(lists[key]) == 0 {
-		err = c.SendNull()
-		return err
+		return helpers.NullBulk{}, nil
 	}
 
 	if len(args) > 1 {
-		amountToPop, _ := strconv.Atoi(args[1])
+		amountToPop, err := strconv.Atoi(args[1])
+		if err != nil || amountToPop < 0 {
+			return helpers.Error("value is out of range, must be positive"), nil
+		}
 		poppedValues := []string{}
 
 		for i := 0; i < amountToPop && len(lists[key]) > 0; i++ {
@@ -34,14 +37,15 @@ func LPop(c helpers.Connection, args []string) error {
 			poppedValues = append(poppedValues, poppedValue)
 		}
 
-		err = c.SendArray(poppedValues)
-		return err
+		response := make(helpers.Array, len(poppedValues))
+		for index, value := range poppedValues {
+			response[index] = helpers.BulkString(value)
+		}
+		return response, nil
 	} else {
 		poppedValue := lists[key][0]
 		lists[key] = lists[key][1:]
 
-		err = c.SendBulk(poppedValue)
+		return helpers.BulkString(poppedValue), nil
 	}
-
-	return err
 }

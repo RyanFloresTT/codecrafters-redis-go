@@ -23,7 +23,10 @@ const (
 	None      Types = "none"
 )
 
-func Type(c helpers.Connection, args []string) error {
+func Type(c helpers.Connection, args []string) (helpers.Value, error) {
+	if len(args) != 1 {
+		return helpers.Error("wrong number of arguments for 'type' command"), nil
+	}
 	key := args[0]
 	valueType := None
 
@@ -35,5 +38,5 @@ func Type(c helpers.Connection, args []string) error {
 		valueType = None
 	}
 
-	return c.Send(valueType.String())
+	return helpers.SimpleString(valueType.String()), nil
 }

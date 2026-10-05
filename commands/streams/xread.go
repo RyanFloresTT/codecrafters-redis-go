@@ -8,9 +8,9 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func XRead(c helpers.Connection, args []string) error {
+func XRead(c helpers.Connection, args []string) (helpers.Value, error) {
 	if len(args) < 3 || (len(args)-1)%2 != 0 {
-		return c.SendError("wrong number of arguments for 'xread' command")
+		return helpers.Error("wrong number of arguments for 'xread' command"), nil
 	}
 
 	timeToBlockMillis := int64(0)
@@ -18,16 +18,22 @@ func XRead(c helpers.Connection, args []string) error {
 
 	if strings.ToUpper(args[0]) == "BLOCK" {
 		blocking = true
-		timeToBlockMillis, _ = strconv.ParseInt(args[1], 10, 64)
+		var err error
+		timeToBlockMillis, err = strconv.ParseInt(args[1], 10, 64)
+		if err != nil || timeToBlockMillis < 0 {
+			return helpers.Error("timeout is not an integer or out of range"), nil
+		}
 
 		args = args[2:]
+	}
+	if len(args) < 3 || !strings.EqualFold(args[0], "STREAMS") || (len(args)-1)%2 != 0 {
+		return helpers.Error("syntax error"), nil
 	}
 
 	numOfStreams := (len(args) - 1) / 2
 
 	keys := args[1 : 1+numOfStreams]
 	ids := args[1+numOfStreams:]
-	response := helpers.Array{}
 	timeout := false
 
 	var timer *time.Timer
@@ -42,58 +48,54 @@ func XRead(c helpers.Connection, args []string) error {
 		defer timer.Stop()
 	}
 
-	if ids[0] == "$" {
-		lastID, ok := GetLastID(keys[0])
-		if ok {
-			ids[0] = lastID.String()
-		} else {
-			ids[0] = "0-0"
-		}
-	}
-
-	getDataErr := func() *streamError {
+	var response helpers.Array
+	var readErr error
+	func() {
 		mapMu.Lock()
 		defer mapMu.Unlock()
 
+		for index, key := range keys {
+			if ids[index] == "$" {
+				if lastID, ok := GetLastID(key); ok {
+					ids[index] = lastID.String()
+				} else {
+					ids[index] = "0-0"
+				}
+			}
+		}
+
 		for {
-			response = collectMatches(keys, ids)
+			response, readErr = collectMatches(keys, ids)
+			if readErr != nil {
+				return
+			}
 
 			if len(response) > 0 || !blocking || timeout {
-				if timer != nil {
-					timer.Stop()
-				}
-				break
+				return
 			}
 
 			mapCond.Wait()
 		}
-
-		return nil
 	}()
 
-	if err := getDataErr; err != nil {
-		return c.SendError(err.Error())
+	if readErr != nil {
+		return helpers.Error(readErr.Error()), nil
 	}
 
 	if len(response) == 0 {
-		return c.SendNullArray()
+		return helpers.NullArray{}, nil
 	}
 
-	if timeout {
-		mapCond.Broadcast()
-		return c.SendNullArray()
-	}
-
-	return response.SendTo(c)
+	return response, nil
 }
 
-func collectMatches(keys []string, ids []string) helpers.Array {
+func collectMatches(keys []string, ids []string) (helpers.Array, error) {
 	response := helpers.Array{}
 
 	for index, key := range keys {
 		start, _, err := tryParseRangeID(ids[index])
 		if err != nil {
-			continue
+			return nil, err
 		}
 
 		data := helpers.Array{}
@@ -109,5 +111,5 @@ func collectMatches(keys []string, ids []string) helpers.Array {
 		}
 	}
 
-	return response
+	return response, nil
 }

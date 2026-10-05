@@ -68,15 +68,24 @@ func readFromConnection(c net.Conn) error {
 	fmt.Println("Arguments: ", args)
 
 	connection := helpers.Connection{Conn: c}
-
-	command := commands.Registry[args[0]]
-
-	if !transactions.ClientTransactions[connection.RemoteAddr()] || strings.ToUpper(command.Name) == "EXEC" {
-		command.Execute(connection, args[1:])
-	} else {
-		transactions.AddToQueue(command.Execute, args[1:])
-		return connection.Send("QUEUED")
+	if len(args) == 0 {
+		return connection.SendError("empty command")
 	}
 
-	return err
+	name := strings.ToUpper(args[0])
+	command, ok := commands.Registry[name]
+	if !ok {
+		return connection.SendError("unknown command '" + args[0] + "'")
+	}
+
+	if name != "MULTI" && name != "EXEC" && transactions.IsActive(connection) {
+		transactions.AddToQueue(connection, command.Execute, args[1:])
+		return helpers.SimpleString("QUEUED").SendTo(connection)
+	}
+
+	response, err := command.Execute(connection, args[1:])
+	if err != nil {
+		return err
+	}
+	return response.SendTo(connection)
 }

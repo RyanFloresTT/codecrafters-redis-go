@@ -6,43 +6,47 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func LRange(c helpers.Connection, args []string) error {
+func LRange(c helpers.Connection, args []string) (helpers.Value, error) {
+	if len(args) != 3 {
+		return helpers.Error("wrong number of arguments for 'lrange' command"), nil
+	}
 
 	listsMu.Lock()
 	defer listsMu.Unlock()
 
 	if _, ok := lists[args[0]]; !ok {
-		return c.SendArray([]string{})
+		return helpers.Array{}, nil
 	}
 
 	start, err := strconv.Atoi(args[1])
 	if err != nil {
-		return err
+		return helpers.Error("value is not an integer or out of range"), nil
 	}
 
 	end, err := strconv.Atoi(args[2])
 	if err != nil {
-		return err
+		return helpers.Error("value is not an integer or out of range"), nil
 	}
-
-	if end > len(lists[args[0]])-1 {
-		end = len(lists[args[0]]) - 1
-	}
-
+	length := len(lists[args[0]])
 	if start < 0 {
-		start += len(lists[args[0]])
-		if start < 0 {
-			start = 0
-		}
+		start += length
 	}
-
 	if end < 0 {
-		end += len(lists[args[0]])
-		if end < 0 {
-			end = 0
-		}
+		end += length
 	}
-
-	err = c.SendArray(lists[args[0]][start : end+1])
-	return err
+	if start < 0 {
+		start = 0
+	}
+	if end >= length {
+		end = length - 1
+	}
+	if length == 0 || start >= length || start > end {
+		return helpers.Array{}, nil
+	}
+	values := lists[args[0]][start : end+1]
+	response := make(helpers.Array, len(values))
+	for index, value := range values {
+		response[index] = helpers.BulkString(value)
+	}
+	return response, nil
 }

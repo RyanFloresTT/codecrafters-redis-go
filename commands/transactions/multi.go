@@ -2,28 +2,49 @@ package transactions
 
 import (
 	"net"
+	"sync"
 
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-var ClientTransactions = make(map[net.Addr]bool)
+type clientTransaction struct {
+	commands []queuedCommand
+}
 
-type CommandFunc func(helpers.Connection, []string) error
+var (
+	clientsMu sync.Mutex
+	clients   = make(map[net.Addr]*clientTransaction)
+)
+
+type CommandFunc func(helpers.Connection, []string) (helpers.Value, error)
 
 type queuedCommand struct {
 	execute CommandFunc
 	args    []string
 }
 
-var queued []queuedCommand
-
-func Multi(c helpers.Connection, args []string) error {
-	ClientTransactions[c.Conn.RemoteAddr()] = true
-	return c.Send("OK")
+func Multi(c helpers.Connection, args []string) (helpers.Value, error) {
+	clientsMu.Lock()
+	clients[c.RemoteAddr()] = &clientTransaction{}
+	clientsMu.Unlock()
+	return helpers.SimpleString("OK"), nil
 }
 
-func AddToQueue(execute CommandFunc, args []string) {
-	queued = append(queued, queuedCommand{
+func IsActive(c helpers.Connection) bool {
+	clientsMu.Lock()
+	defer clientsMu.Unlock()
+	_, ok := clients[c.RemoteAddr()]
+	return ok
+}
+
+func AddToQueue(c helpers.Connection, execute CommandFunc, args []string) {
+	clientsMu.Lock()
+	defer clientsMu.Unlock()
+	transaction := clients[c.RemoteAddr()]
+	if transaction == nil {
+		return
+	}
+	transaction.commands = append(transaction.commands, queuedCommand{
 		execute: execute,
 		args:    append([]string(nil), args...),
 	})

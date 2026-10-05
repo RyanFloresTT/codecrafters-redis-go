@@ -4,7 +4,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func Llen(c helpers.Connection, args []string) error {
+func Llen(c helpers.Connection, args []string) (helpers.Value, error) {
 	key := args[0]
 
 	listsMu.Lock()
@@ -12,7 +12,5 @@ func Llen(c helpers.Connection, args []string) error {
 
 	length := len(lists[key])
 
-	err := c.SendArrayLength(length)
-
-	return err
+	return helpers.Integer(length), nil
 }

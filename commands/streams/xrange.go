@@ -4,18 +4,18 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func XRange(c helpers.Connection, args []string) error {
+func XRange(c helpers.Connection, args []string) (helpers.Value, error) {
 	if len(args) != 3 {
-		return c.SendError("wrong number of arguments for 'xrange' command")
+		return helpers.Error("wrong number of arguments for 'xrange' command"), nil
 	}
 
 	start, _, err := tryParseRangeID(args[1])
 	if err != nil {
-		return c.SendError(err.Error())
+		return helpers.Error(err.Error()), nil
 	}
 	end, _, err := tryParseRangeID(args[2])
 	if err != nil {
-		return c.SendError(err.Error())
+		return helpers.Error(err.Error()), nil
 	}
 
 	response := helpers.Array{}
@@ -25,5 +25,5 @@ func XRange(c helpers.Connection, args []string) error {
 		}
 		response = append(response, item.RESP())
 	}
-	return response.SendTo(c)
+	return response, nil
 }

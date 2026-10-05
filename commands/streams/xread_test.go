@@ -47,7 +47,11 @@ func TestXRead(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			streamMap = map[string][]entry{"pineapple": test.entries}
 			connection := &xreadTestConnection{}
-			if err := XRead(helpers.Connection{Conn: connection}, test.args); err != nil {
+			response, err := XRead(helpers.Connection{Conn: connection}, test.args)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := response.SendTo(helpers.Connection{Conn: connection}); err != nil {
 				t.Fatal(err)
 			}
 			if got := connection.output.String(); got != test.want {
@@ -85,7 +89,11 @@ func TestXReadMultipleStreams(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			connection := &xreadTestConnection{}
-			if err := XRead(helpers.Connection{Conn: connection}, test.args); err != nil {
+			response, err := XRead(helpers.Connection{Conn: connection}, test.args)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := response.SendTo(helpers.Connection{Conn: connection}); err != nil {
 				t.Fatal(err)
 			}
 			if got := connection.output.String(); got != test.want {

@@ -7,7 +7,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/helpers"
 )
 
-func Set(c helpers.Connection, args []string) error {
+func Set(c helpers.Connection, args []string) (helpers.Value, error) {
 	numArgs := len(args)
 	dictionary := GetMap()
 
@@ -16,7 +16,7 @@ func Set(c helpers.Connection, args []string) error {
 		// Handle the case where only the key and value are provided
 
 		dictionary[args[0]] = entry{Value: args[1]}
-		return c.Send("OK")
+		return helpers.SimpleString("OK"), nil
 
 	case 4:
 		// Handle the case where key/value and expiration are provided
@@ -25,25 +25,25 @@ func Set(c helpers.Connection, args []string) error {
 		case "EX": // Expiration time in seconds
 			expireSeconds, err := strconv.Atoi(args[3])
 			if err != nil {
-				return c.SendError("ERR invalid expire time")
+				return helpers.Error("invalid expire time"), nil
 			} else {
 				dictionary[args[0]] = entry{Value: args[1], ExpiresAt: time.Now().Add(time.Duration(expireSeconds) * time.Second)}
-				return c.Send("OK")
+				return helpers.SimpleString("OK"), nil
 			}
 		case "PX": // Expiration time in milliseconds
 			expireMilliseconds, err := strconv.Atoi(args[3])
 			if err != nil {
-				return c.SendError("ERR invalid expire time")
+				return helpers.Error("invalid expire time"), nil
 			} else {
 				dictionary[args[0]] = entry{Value: args[1], ExpiresAt: time.Now().Add(time.Duration(expireMilliseconds) * time.Millisecond)}
-				return c.Send("OK")
+				return helpers.SimpleString("OK"), nil
 			}
 		default:
-			return c.SendError("ERR syntax error")
+			return helpers.Error("syntax error"), nil
 		}
 
 	default:
 		// Handle the default case
-		return c.SendError("ERR wrong number of arguments for 'SET' command")
+		return helpers.Error("wrong number of arguments for 'SET' command"), nil
 	}
 }
