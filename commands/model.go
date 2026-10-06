@@ -11,7 +11,7 @@ type Command struct {
 
 type CLICommand struct {
 	Name              string
-	Execute           func(args []string) (resp.Value, error)
+	Execute           func(args []string) error
 	Args              []string
 	IsExemptFromQueue bool
 }

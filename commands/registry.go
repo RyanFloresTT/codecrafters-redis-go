@@ -38,5 +38,6 @@ var Registry = map[string]Command{
 }
 
 var CLI = map[string]CLICommand{
-	"PORT": {Name: "PORT", Execute: cli.Port},
+	"PORT":      {Name: "PORT", Execute: cli.Port},
+	"REPLICAOF": {Name: "REPLICAOF", Execute: cli.ReplicaOf},
 }

@@ -5,7 +5,7 @@ import "fmt"
 var Redis = RedisInfo{
 	Port: 6379,
 	Replication: Replication{
-		role: "master",
+		Role: "master",
 	},
 }
 
@@ -15,9 +15,9 @@ type RedisInfo struct {
 }
 
 type Replication struct {
-	role string
+	Role string
 }
 
 func (r *Replication) String() string {
-	return fmt.Sprintf("role:%s", r.role)
+	return fmt.Sprintf("role:%s", r.Role)
 }

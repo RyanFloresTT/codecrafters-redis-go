@@ -25,7 +25,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "%s requires a value\n", args[0])
 			os.Exit(1)
 		}
-		_, err := command.Execute(args[1:2])
+		err := command.Execute(args[1:2])
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
