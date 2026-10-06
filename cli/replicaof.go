@@ -1,13 +1,20 @@
 package cli
 
-import "github.com/codecrafters-io/redis-starter-go/cli/info"
+import (
+	"strconv"
+	"strings"
+
+	"github.com/codecrafters-io/redis-starter-go/cli/info"
+)
 
 func ReplicaOf(args []string) error {
-	// masterHost := args[0]
-	// masterPort := args[1]
+	masterParts := strings.Split(args[0], " ")
 
-	// info.Redis.ReplicaOfHost = masterHost
-	// info.Redis.ReplicaOfPort = masterPort
+	masterHost := strings.TrimPrefix(masterParts[0], "\"")
+	masterPort := strings.TrimSuffix(masterParts[1], "\"")
+
+	info.Redis.Replication.MasterHost = masterHost
+	info.Redis.Replication.MasterPort, _ = strconv.Atoi(masterPort)
 
 	info.Redis.Replication.Role = "slave"
 

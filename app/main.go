@@ -5,9 +5,11 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/cli/info"
 	"github.com/codecrafters-io/redis-starter-go/commands"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
 func main() {
@@ -40,6 +42,20 @@ func main() {
 	if err != nil {
 		fmt.Println("Failed to bind to port", port)
 		os.Exit(1)
+	}
+
+	// Handshake if slave
+	if info.Redis.Replication.Role == "slave" {
+		address := net.JoinHostPort(info.Redis.Replication.MasterHost, fmt.Sprintf("%d", info.Redis.Replication.MasterPort))
+		masterConnection, err := net.DialTimeout("tcp", address, 5*time.Second)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to connect to master:", err)
+			os.Exit(1)
+		}
+		defer masterConnection.Close()
+
+		// Perform initial handshake with master
+		resp.Array([]resp.Value{resp.BulkString("PING")}).SendTo(resp.Connection{Conn: masterConnection})
 	}
 
 	for {
