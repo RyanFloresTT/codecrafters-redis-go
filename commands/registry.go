@@ -31,4 +31,5 @@ var Registry = map[string]Command{
 	"EXEC":    {Name: "EXEC", Execute: transactions.Exec, IsExemptFromQueue: true},
 	"DISCARD": {Name: "DISCARD", Execute: transactions.Discard, IsExemptFromQueue: true},
 	"WATCH":   {Name: "WATCH", Execute: optimistic_locking.Watch, IsExemptFromQueue: true},
+	"UNWATCH": {Name: "UNWATCH", Execute: optimistic_locking.Unwatch},
 }

@@ -1,6 +1,8 @@
 package optimistic_locking
 
 import (
+	"fmt"
+
 	"github.com/codecrafters-io/redis-starter-go/commands/optimistic_locking/state"
 	"github.com/codecrafters-io/redis-starter-go/commands/transactions"
 	"github.com/codecrafters-io/redis-starter-go/resp"
@@ -23,6 +25,8 @@ func Watch(c resp.Connection, args []string) (resp.Value, error) {
 }
 
 func Unwatch(c resp.Connection, args []string) (resp.Value, error) {
+	fmt.Println(len(WatchedKeys))
+
 	for key := range WatchedKeys {
 		delete(WatchedKeys, key)
 	}

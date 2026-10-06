@@ -1,9 +1,9 @@
 package state
 
-var WatchedKeys = make(map[string]bool)
+type WatchedKeysMap map[string]bool
 
-func ClearWatchedKeys() {
-	for key := range WatchedKeys {
-		delete(WatchedKeys, key)
-	}
+var WatchedKeys = make(WatchedKeysMap)
+
+func (w WatchedKeysMap) Clear() {
+	WatchedKeys = make(WatchedKeysMap)
 }

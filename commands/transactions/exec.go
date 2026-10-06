@@ -9,7 +9,7 @@ func Exec(c resp.Connection, args []string) (resp.Value, error) {
 	for _, wasModified := range state.WatchedKeys {
 		if wasModified {
 			Discard(c, nil)
-			state.ClearWatchedKeys()
+			state.WatchedKeys.Clear()
 			return resp.NullArray{}, nil
 		}
 	}
