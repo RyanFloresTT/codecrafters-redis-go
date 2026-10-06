@@ -38,6 +38,7 @@ var Registry = map[string]Command{
 	"INFO":     {Name: "INFO", Execute: info.GetInfo},
 	"REPLCONF": {Name: "REPLCONF", Execute: replication.ReplConf},
 	"PSYNC":    {Name: "PSYNC", Execute: replication.Psync},
+	"WAIT":     {Name: "WAIT", Execute: replication.Wait},
 }
 
 var CLI = map[string]CLICommand{
