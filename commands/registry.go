@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/cli"
+	"github.com/codecrafters-io/redis-starter-go/cli/info"
 	"github.com/codecrafters-io/redis-starter-go/commands/basic"
 	"github.com/codecrafters-io/redis-starter-go/commands/lists"
 	"github.com/codecrafters-io/redis-starter-go/commands/numbers"
@@ -32,4 +34,9 @@ var Registry = map[string]Command{
 	"DISCARD": {Name: "DISCARD", Execute: transactions.Discard, IsExemptFromQueue: true},
 	"WATCH":   {Name: "WATCH", Execute: optimistic_locking.Watch, IsExemptFromQueue: true},
 	"UNWATCH": {Name: "UNWATCH", Execute: optimistic_locking.Unwatch},
+	"INFO":    {Name: "INFO", Execute: info.GetInfo},
+}
+
+var CLI = map[string]CLICommand{
+	"PORT": {Name: "PORT", Execute: cli.Port},
 }

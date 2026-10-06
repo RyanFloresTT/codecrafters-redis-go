@@ -4,27 +4,37 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
+	"strings"
+
+	"github.com/codecrafters-io/redis-starter-go/cli/info"
+	"github.com/codecrafters-io/redis-starter-go/commands"
 )
 
 func main() {
 	args := os.Args[1:]
 
-	port := "6379"
-
-	for i := 0; i < len(args); i++ {
-		if args[i] == "--port" && i+1 < len(args) {
-
-			// validate port
-			if portNum, err := strconv.Atoi(args[i+1]); err != nil || portNum <= 0 || portNum > 65535 {
-				fmt.Println("Invalid port:", args[i+1])
-				os.Exit(1)
-			}
-
-			port = args[i+1]
-			i++ // Skip the port value
+	for len(args) > 0 {
+		name := strings.ToUpper(strings.TrimPrefix(args[0], "--"))
+		command, ok := commands.CLI[name]
+		if !ok {
+			fmt.Fprintf(os.Stderr, "unknown command %q\n", args[0])
+			os.Exit(1)
 		}
+
+		if len(args) < 2 {
+			fmt.Fprintf(os.Stderr, "%s requires a value\n", args[0])
+			os.Exit(1)
+		}
+		_, err := command.Execute(args[1:2])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
+		args = args[2:]
 	}
+
+	port := fmt.Sprintf("%d", info.Redis.Port)
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+port)
 	if err != nil {

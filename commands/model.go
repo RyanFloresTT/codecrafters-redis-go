@@ -8,3 +8,10 @@ type Command struct {
 	Args              []string
 	IsExemptFromQueue bool
 }
+
+type CLICommand struct {
+	Name              string
+	Execute           func(args []string) (resp.Value, error)
+	Args              []string
+	IsExemptFromQueue bool
+}
