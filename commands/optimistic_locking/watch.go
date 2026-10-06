@@ -21,3 +21,10 @@ func Watch(c resp.Connection, args []string) (resp.Value, error) {
 
 	return resp.SimpleString("OK"), nil
 }
+
+func Unwatch(c resp.Connection, args []string) (resp.Value, error) {
+	for key := range WatchedKeys {
+		delete(WatchedKeys, key)
+	}
+	return resp.SimpleString("OK"), nil
+}
