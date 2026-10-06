@@ -73,6 +73,7 @@ func handleHandshake(connection resp.Connection, port string) {
 		resp.Array([]resp.Value{resp.BulkString("PING")}),
 		resp.Array([]resp.Value{resp.BulkString("REPLCONF"), resp.BulkString("listening-port"), resp.BulkString(port)}),
 		resp.Array([]resp.Value{resp.BulkString("REPLCONF"), resp.BulkString("capa"), resp.BulkString("psync2")}),
+		resp.Array([]resp.Value{resp.BulkString("PSYNC"), resp.BulkString("?"), resp.BulkString("-1")}),
 	}
 
 	for _, cmd := range handshakeCommands {
