@@ -5,5 +5,5 @@ import (
 )
 
 func Wait(c resp.Connection, args []string) (resp.Value, error) {
-	return resp.Integer(0), nil
+	return resp.Integer(len(GetReplicas())), nil
 }
