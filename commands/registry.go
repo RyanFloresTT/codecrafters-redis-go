@@ -4,6 +4,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/commands/basic"
 	"github.com/codecrafters-io/redis-starter-go/commands/lists"
 	"github.com/codecrafters-io/redis-starter-go/commands/numbers"
+	"github.com/codecrafters-io/redis-starter-go/commands/optimistic_locking"
 	"github.com/codecrafters-io/redis-starter-go/commands/streams"
 	"github.com/codecrafters-io/redis-starter-go/commands/strings"
 	"github.com/codecrafters-io/redis-starter-go/commands/transactions"
@@ -29,4 +30,5 @@ var Registry = map[string]Command{
 	"MULTI":   {Name: "MULTI", Execute: transactions.Multi},
 	"EXEC":    {Name: "EXEC", Execute: transactions.Exec},
 	"DISCARD": {Name: "DISCARD", Execute: transactions.Discard},
+	"WATCH":   {Name: "WATCH", Execute: optimistic_locking.Watch},
 }
