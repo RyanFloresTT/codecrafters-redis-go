@@ -1,9 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net"
-	"os"
 	"strconv"
 	"strings"
 
@@ -15,79 +16,119 @@ import (
 
 func handleConnection(c net.Conn) {
 	defer c.Close()
+	reader := bufio.NewReader(c)
 
 	for {
-		if err := readFromConnection(c); err != nil {
+		if err := readFromConnection(c, reader); err != nil {
 			fmt.Println("Error handling connection: ", err.Error())
 			return
 		}
 	}
 }
 
-func readFromConnection(c net.Conn) error {
-	const minBufSize = 1024
+func handleMasterConnection(c net.Conn) {
+	defer c.Close()
+	reader := bufio.NewReader(c)
 
-	buf := make([]byte, minBufSize)
-
-	n, err := c.Read(buf)
-	if err != nil {
-		fmt.Println("Error reading from connection: ", err.Error())
-		os.Exit(1)
-	}
-
-	message := string(buf[:n])
-	i := strings.Index(message, "\r\n")
-	numArgs := (message[1:i])
-
-	numArgsInt, err := strconv.Atoi(numArgs)
-	if err != nil {
-		fmt.Println("Error converting number of arguments: ", err.Error())
-		os.Exit(1)
-	}
-
-	args := make([]string, numArgsInt)
-
-	for j := 0; j < numArgsInt; j++ {
-		i += 2 // move past the previous \r\n
-
-		lengthEnd := strings.Index(message[i:], "\r\n")
-		if lengthEnd == -1 {
-			return fmt.Errorf("incomplete argument length")
-		}
-
-		byteLen := message[i : i+lengthEnd]
-		byteLenInt, err := strconv.Atoi(byteLen[1:])
+	for {
+		args, err := parseArgs(reader)
 		if err != nil {
-			return err
+			return
 		}
 
-		i += lengthEnd + 2
-		args[j] = message[i : i+byteLenInt]
-		i += byteLenInt
+		if _, err := dispatchCommand(resp.Connection{Conn: c}, args); err != nil {
+			return
+		}
 	}
+}
 
-	fmt.Println("Arguments: ", args)
+func readFromConnection(c net.Conn, reader *bufio.Reader) error {
+	args, err := parseArgs(reader)
+	if err != nil {
+		return err
+	}
 
 	connection := resp.Connection{Conn: c}
 	if len(args) == 0 {
 		return connection.SendError("empty command")
 	}
 
+	response, err := dispatchCommand(connection, args)
+	if err != nil {
+		return err
+	}
+
+	return response.SendTo(connection)
+}
+
+func readRESPLine(reader *bufio.Reader) (string, error) {
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	if !strings.HasSuffix(line, "\r\n") {
+		return "", fmt.Errorf("invalid RESP line ending")
+	}
+	return strings.TrimSuffix(line, "\r\n"), nil
+}
+
+func parseArgs(reader *bufio.Reader) ([]string, error) {
+	header, err := readRESPLine(reader)
+	if err != nil {
+		return nil, err
+	}
+	if !strings.HasPrefix(header, "*") {
+		return nil, fmt.Errorf("expected RESP array")
+	}
+	count, err := strconv.Atoi(header[1:])
+	if err != nil || count <= 0 {
+		return nil, fmt.Errorf("invalid command array length: %s", header)
+	}
+	args := make([]string, count)
+	for index := range args {
+		lengthHeader, err := readRESPLine(reader)
+		if err != nil {
+			return nil, err
+		}
+		if !strings.HasPrefix(lengthHeader, "$") {
+			return nil, fmt.Errorf("expected RESP bulk string")
+		}
+		length, err := strconv.Atoi(lengthHeader[1:])
+		if err != nil || length < 0 {
+			return nil, fmt.Errorf("invalid bulk string length: %s", lengthHeader)
+		}
+		data := make([]byte, length)
+		if _, err := io.ReadFull(reader, data); err != nil {
+			return nil, err
+		}
+		var ending [2]byte
+		if _, err := io.ReadFull(reader, ending[:]); err != nil {
+			return nil, err
+		}
+		if string(ending[:]) != "\r\n" {
+			return nil, fmt.Errorf("invalid bulk string ending")
+		}
+		args[index] = string(data)
+	}
+	return args, nil
+}
+
+func dispatchCommand(connection resp.Connection, args []string) (resp.Value, error) {
 	name := strings.ToUpper(args[0])
 	command, ok := commands.Registry[name]
 	if !ok {
-		return connection.SendError("unknown command '" + args[0] + "'")
+		return nil, fmt.Errorf("unknown command '" + args[0] + "'")
 	}
 
 	if !command.IsExemptFromQueue && transactions.IsActive(connection) {
 		transactions.AddToQueue(connection, command.Execute, args[1:])
-		return resp.SimpleString("QUEUED").SendTo(connection)
+		return resp.SimpleString("QUEUED"), nil
 	}
 
 	command.Args = args[1:]
 	response, err := command.Execute(connection, args[1:])
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, replica := range replication.GetReplicas() {
@@ -99,6 +140,5 @@ func readFromConnection(c net.Conn) error {
 			replicaCommand.SendTo(replica)
 		}()
 	}
-
-	return response.SendTo(connection)
+	return response, nil
 }
