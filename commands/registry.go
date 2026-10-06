@@ -27,8 +27,8 @@ var Registry = map[string]Command{
 	"XRANGE":  {Name: "XRANGE", Execute: streams.XRange},
 	"XREAD":   {Name: "XREAD", Execute: streams.XRead},
 	"INCR":    {Name: "INCR", Execute: numbers.Incr},
-	"MULTI":   {Name: "MULTI", Execute: transactions.Multi},
-	"EXEC":    {Name: "EXEC", Execute: transactions.Exec},
-	"DISCARD": {Name: "DISCARD", Execute: transactions.Discard},
-	"WATCH":   {Name: "WATCH", Execute: optimistic_locking.Watch},
+	"MULTI":   {Name: "MULTI", Execute: transactions.Multi, IsExemptFromQueue: true},
+	"EXEC":    {Name: "EXEC", Execute: transactions.Exec, IsExemptFromQueue: true},
+	"DISCARD": {Name: "DISCARD", Execute: transactions.Discard, IsExemptFromQueue: true},
+	"WATCH":   {Name: "WATCH", Execute: optimistic_locking.Watch, IsExemptFromQueue: true},
 }

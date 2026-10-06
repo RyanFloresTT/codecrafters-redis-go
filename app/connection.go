@@ -78,7 +78,7 @@ func readFromConnection(c net.Conn) error {
 		return connection.SendError("unknown command '" + args[0] + "'")
 	}
 
-	if name != "MULTI" && name != "EXEC" && name != "DISCARD" && transactions.IsActive(connection) {
+	if !command.IsExemptFromQueue && transactions.IsActive(connection) {
 		transactions.AddToQueue(connection, command.Execute, args[1:])
 		return helpers.SimpleString("QUEUED").SendTo(connection)
 	}
