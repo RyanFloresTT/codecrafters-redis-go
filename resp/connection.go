@@ -45,3 +45,8 @@ func (c Connection) SendArray(messages []string) error {
 func (c Connection) SendArrayLength(length int) error {
 	return Integer(length).SendTo(c)
 }
+
+func (c Connection) SendFile(contents string) error {
+	_, err := fmt.Fprintf(c.Conn, "$%d\r\n%s", len(contents), contents)
+	return err
+}

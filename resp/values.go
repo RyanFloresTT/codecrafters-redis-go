@@ -13,6 +13,17 @@ type Array []Value
 type NullBulk struct{}
 type NullArray struct{}
 type Error string
+type File string
+type CommandArray []Value
+
+func (commands CommandArray) SendTo(c Connection) error {
+	for _, command := range commands {
+		if err := command.SendTo(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (message SimpleString) SendTo(c Connection) error {
 	return c.Send(string(message))
@@ -49,4 +60,8 @@ func (NullArray) SendTo(c Connection) error {
 
 func (message Error) SendTo(c Connection) error {
 	return c.SendError(string(message))
+}
+
+func (contents File) SendTo(c Connection) error {
+	return c.SendFile(string(contents))
 }
