@@ -37,6 +37,7 @@ var Registry = map[string]Command{
 	"UNWATCH":  {Name: "UNWATCH", Execute: optimistic_locking.Unwatch},
 	"INFO":     {Name: "INFO", Execute: info.GetInfo},
 	"REPLCONF": {Name: "REPLCONF", Execute: replication.ReplConf},
+	"PSYNC":    {Name: "PSYNC", Execute: replication.Psync},
 }
 
 var CLI = map[string]CLICommand{
