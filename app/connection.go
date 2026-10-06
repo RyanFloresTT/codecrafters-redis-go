@@ -26,14 +26,31 @@ func handleConnection(c net.Conn) {
 	}
 }
 
-func handleMasterConnection(c net.Conn) {
+func handleMasterConnection(c net.Conn, reader *bufio.Reader) {
 	defer c.Close()
-	reader := bufio.NewReader(c)
 
 	for {
 		args, err := parseArgs(reader)
 		if err != nil {
 			return
+		}
+
+		if len(args) == 3 &&
+			strings.EqualFold(args[0], "REPLCONF") &&
+			strings.EqualFold(args[1], "GETACK") &&
+			args[2] == "*" {
+
+			connection := resp.Connection{Conn: c}
+			currentOffset := 0 // replication.GetCurrentOffset()
+			response := resp.Array([]resp.Value{
+				resp.BulkString("REPLCONF"),
+				resp.BulkString("ACK"),
+				resp.BulkString(strconv.Itoa(currentOffset)),
+			})
+			if err := response.SendTo(connection); err != nil {
+				return
+			}
+			continue
 		}
 
 		if _, err := dispatchCommand(resp.Connection{Conn: c}, args); err != nil {
@@ -131,6 +148,7 @@ func dispatchCommand(connection resp.Connection, args []string) (resp.Value, err
 		return nil, err
 	}
 
+	// kinda don't like this here, as this is called even on replicas, even though it will be empty for them
 	for _, replica := range replication.GetReplicas() {
 		if !command.Replicates {
 			continue

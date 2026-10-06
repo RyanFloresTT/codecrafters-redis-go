@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,7 +34,7 @@ func main() {
 	}
 }
 
-func handleHandshake(connection resp.Connection, port string) {
+func handleHandshake(connection resp.Connection, port string, reader *bufio.Reader) error {
 	handshakeCommands := []resp.Array{
 		resp.Array([]resp.Value{resp.BulkString("PING")}),
 		resp.Array([]resp.Value{resp.BulkString("REPLCONF"), resp.BulkString("listening-port"), resp.BulkString(port)}),
@@ -39,19 +42,41 @@ func handleHandshake(connection resp.Connection, port string) {
 		resp.Array([]resp.Value{resp.BulkString("PSYNC"), resp.BulkString("?"), resp.BulkString("-1")}),
 	}
 
-	for _, cmd := range handshakeCommands {
-		cmd.SendTo(connection)
-
-		minBufSize := 1024
-
-		buf := make([]byte, minBufSize)
-
-		_, err := connection.Read(buf)
+	for index, cmd := range handshakeCommands {
+		if err := cmd.SendTo(connection); err != nil {
+			return err
+		}
+		line, err := readRESPLine(reader)
 		if err != nil {
-			fmt.Println("Error reading from connection: ", err.Error())
-			os.Exit(1)
+			return err
+		}
+		if index == len(handshakeCommands)-1 {
+			if !strings.HasPrefix(line, "+FULLRESYNC ") {
+				return fmt.Errorf("unexpected PSYNC response: %s", line)
+			}
+		} else {
+			expected := "+OK"
+			if index == 0 {
+				expected = "+PONG"
+			}
+			if line != expected {
+				return fmt.Errorf("unexpected handshake response: %s", line)
+			}
 		}
 	}
+	header, err := readRESPLine(reader)
+	if err != nil {
+		return err
+	}
+	if !strings.HasPrefix(header, "$") {
+		return fmt.Errorf("expected RDB length, got %s", header)
+	}
+	length, err := strconv.ParseInt(header[1:], 10, 64)
+	if err != nil || length < 0 {
+		return fmt.Errorf("invalid RDB length: %s", header)
+	}
+	_, err = io.CopyN(io.Discard, reader, length)
+	return err
 }
 
 func parseCLIArgs(args *[]string) {
@@ -87,8 +112,13 @@ func checkReplicationRole() {
 			os.Exit(1)
 		}
 
-		handleHandshake(resp.Connection{Conn: masterConnection}, fmt.Sprintf("%d", info.Redis.Port))
-		go handleMasterConnection(masterConnection)
+		reader := bufio.NewReader(masterConnection)
+		if err := handleHandshake(resp.Connection{Conn: masterConnection}, fmt.Sprintf("%d", info.Redis.Port), reader); err != nil {
+			masterConnection.Close()
+			fmt.Fprintln(os.Stderr, "Failed replication handshake:", err)
+			os.Exit(1)
+		}
+		go handleMasterConnection(masterConnection, reader)
 	}
 }
 
