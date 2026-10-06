@@ -4,6 +4,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/codecrafters-io/redis-starter-go/commands/optimistic_locking/state"
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
@@ -33,6 +34,8 @@ func Multi(c resp.Connection, args []string) (resp.Value, error) {
 func Discard(c resp.Connection, args []string) (resp.Value, error) {
 	clientsMu.Lock()
 	defer clientsMu.Unlock()
+
+	state.WatchedKeys.Clear()
 
 	if _, ok := clients[c.RemoteAddr()]; ok {
 		delete(clients, c.RemoteAddr())
