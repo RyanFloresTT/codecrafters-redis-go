@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/commands"
+	"github.com/codecrafters-io/redis-starter-go/commands/replication"
 	"github.com/codecrafters-io/redis-starter-go/commands/transactions"
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
@@ -83,9 +84,21 @@ func readFromConnection(c net.Conn) error {
 		return resp.SimpleString("QUEUED").SendTo(connection)
 	}
 
+	command.Args = args[1:]
 	response, err := command.Execute(connection, args[1:])
 	if err != nil {
 		return err
 	}
+
+	for _, replica := range replication.GetReplicas() {
+		if !command.Replicates {
+			continue
+		}
+		go func() {
+			replicaCommand := command.ToReplicaCommand()
+			replicaCommand.SendTo(replica)
+		}()
+	}
+
 	return response.SendTo(connection)
 }

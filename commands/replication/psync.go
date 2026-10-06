@@ -14,6 +14,8 @@ func Psync(c resp.Connection, args []string) (resp.Value, error) {
 		fmt.Println("Error decoding RDB contents:", err)
 	}
 
+	AddReplica(c)
+
 	return resp.CommandArray{
 		resp.SimpleString(fmt.Sprintf("FULLRESYNC %s %d", info.Redis.Replication.MasterReplID, info.Redis.Replication.MasterReplOffset)),
 		resp.File(string(data)),
