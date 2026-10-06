@@ -1,10 +1,10 @@
 package lists
 
-import "github.com/codecrafters-io/redis-starter-go/helpers"
+import "github.com/codecrafters-io/redis-starter-go/resp"
 
-func LPush(c helpers.Connection, args []string) (helpers.Value, error) {
+func LPush(c resp.Connection, args []string) (resp.Value, error) {
 	if len(args) < 2 {
-		return helpers.Error("wrong number of arguments for 'lpush' command"), nil
+		return resp.Error("wrong number of arguments for 'lpush' command"), nil
 	}
 
 	key := args[0]
@@ -18,5 +18,5 @@ func LPush(c helpers.Connection, args []string) (helpers.Value, error) {
 	}
 
 	listCond.Broadcast()
-	return helpers.Integer(len(lists[key])), nil
+	return resp.Integer(len(lists[key])), nil
 }

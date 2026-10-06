@@ -3,7 +3,7 @@ package streams
 import (
 	"strconv"
 
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
 type entry struct {
@@ -11,13 +11,13 @@ type entry struct {
 	values []kvp
 }
 
-func (item entry) RESP() helpers.Value {
-	fields := make(helpers.Array, 0, len(item.values)*2)
+func (item entry) RESP() resp.Value {
+	fields := make(resp.Array, 0, len(item.values)*2)
 	for _, pair := range item.values {
-		fields = append(fields, helpers.BulkString(pair.key), helpers.BulkString(pair.value))
+		fields = append(fields, resp.BulkString(pair.key), resp.BulkString(pair.value))
 	}
-	return helpers.Array{
-		helpers.BulkString(item.id.String()),
+	return resp.Array{
+		resp.BulkString(item.id.String()),
 		fields,
 	}
 }

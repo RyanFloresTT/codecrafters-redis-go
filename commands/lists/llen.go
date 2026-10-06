@@ -1,10 +1,10 @@
 package lists
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Llen(c helpers.Connection, args []string) (helpers.Value, error) {
+func Llen(c resp.Connection, args []string) (resp.Value, error) {
 	key := args[0]
 
 	listsMu.Lock()
@@ -12,5 +12,5 @@ func Llen(c helpers.Connection, args []string) (helpers.Value, error) {
 
 	length := len(lists[key])
 
-	return helpers.Integer(length), nil
+	return resp.Integer(length), nil
 }

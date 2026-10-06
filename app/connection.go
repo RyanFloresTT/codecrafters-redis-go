@@ -9,7 +9,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/commands"
 	"github.com/codecrafters-io/redis-starter-go/commands/transactions"
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
 func handleConnection(c net.Conn) {
@@ -67,7 +67,7 @@ func readFromConnection(c net.Conn) error {
 
 	fmt.Println("Arguments: ", args)
 
-	connection := helpers.Connection{Conn: c}
+	connection := resp.Connection{Conn: c}
 	if len(args) == 0 {
 		return connection.SendError("empty command")
 	}
@@ -80,7 +80,7 @@ func readFromConnection(c net.Conn) error {
 
 	if !command.IsExemptFromQueue && transactions.IsActive(connection) {
 		transactions.AddToQueue(connection, command.Execute, args[1:])
-		return helpers.SimpleString("QUEUED").SendTo(connection)
+		return resp.SimpleString("QUEUED").SendTo(connection)
 	}
 
 	response, err := command.Execute(connection, args[1:])

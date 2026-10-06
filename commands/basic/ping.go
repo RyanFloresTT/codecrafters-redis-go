@@ -1,9 +1,9 @@
 package basic
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Ping(c helpers.Connection, args []string) (helpers.Value, error) {
-	return helpers.SimpleString("PONG"), nil
+func Ping(c resp.Connection, args []string) (resp.Value, error) {
+	return resp.SimpleString("PONG"), nil
 }

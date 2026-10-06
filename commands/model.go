@@ -1,10 +1,10 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/helpers"
+import "github.com/codecrafters-io/redis-starter-go/resp"
 
 type Command struct {
 	Name              string
-	Execute           func(connection helpers.Connection, args []string) (helpers.Value, error)
+	Execute           func(connection resp.Connection, args []string) (resp.Value, error)
 	Args              []string
 	IsExemptFromQueue bool
 }

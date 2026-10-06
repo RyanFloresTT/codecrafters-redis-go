@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func XRead(c helpers.Connection, args []string) (helpers.Value, error) {
+func XRead(c resp.Connection, args []string) (resp.Value, error) {
 	if len(args) < 3 || (len(args)-1)%2 != 0 {
-		return helpers.Error("wrong number of arguments for 'xread' command"), nil
+		return resp.Error("wrong number of arguments for 'xread' command"), nil
 	}
 
 	timeToBlockMillis := int64(0)
@@ -21,13 +21,13 @@ func XRead(c helpers.Connection, args []string) (helpers.Value, error) {
 		var err error
 		timeToBlockMillis, err = strconv.ParseInt(args[1], 10, 64)
 		if err != nil || timeToBlockMillis < 0 {
-			return helpers.Error("timeout is not an integer or out of range"), nil
+			return resp.Error("timeout is not an integer or out of range"), nil
 		}
 
 		args = args[2:]
 	}
 	if len(args) < 3 || !strings.EqualFold(args[0], "STREAMS") || (len(args)-1)%2 != 0 {
-		return helpers.Error("syntax error"), nil
+		return resp.Error("syntax error"), nil
 	}
 
 	numOfStreams := (len(args) - 1) / 2
@@ -48,7 +48,7 @@ func XRead(c helpers.Connection, args []string) (helpers.Value, error) {
 		defer timer.Stop()
 	}
 
-	var response helpers.Array
+	var response resp.Array
 	var readErr error
 	func() {
 		mapMu.Lock()
@@ -79,18 +79,18 @@ func XRead(c helpers.Connection, args []string) (helpers.Value, error) {
 	}()
 
 	if readErr != nil {
-		return helpers.Error(readErr.Error()), nil
+		return resp.Error(readErr.Error()), nil
 	}
 
 	if len(response) == 0 {
-		return helpers.NullArray{}, nil
+		return resp.NullArray{}, nil
 	}
 
 	return response, nil
 }
 
-func collectMatches(keys []string, ids []string) (helpers.Array, error) {
-	response := helpers.Array{}
+func collectMatches(keys []string, ids []string) (resp.Array, error) {
+	response := resp.Array{}
 
 	for index, key := range keys {
 		start, _, err := tryParseRangeID(ids[index])
@@ -98,7 +98,7 @@ func collectMatches(keys []string, ids []string) (helpers.Array, error) {
 			return nil, err
 		}
 
-		data := helpers.Array{}
+		data := resp.Array{}
 
 		for _, item := range streamMap[key] {
 			if rangeIDBefore(start, item.id) {
@@ -107,7 +107,7 @@ func collectMatches(keys []string, ids []string) (helpers.Array, error) {
 		}
 
 		if len(data) > 0 {
-			response = append(response, helpers.Array{helpers.BulkString(key), data})
+			response = append(response, resp.Array{resp.BulkString(key), data})
 		}
 	}
 

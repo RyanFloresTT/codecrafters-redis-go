@@ -3,12 +3,12 @@ package lists
 import (
 	"strconv"
 
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func LPop(c helpers.Connection, args []string) (helpers.Value, error) {
+func LPop(c resp.Connection, args []string) (resp.Value, error) {
 	if len(args) == 0 || len(args) > 2 {
-		return helpers.Error("wrong number of arguments for 'lpop' command"), nil
+		return resp.Error("wrong number of arguments for 'lpop' command"), nil
 	}
 	key := args[0]
 
@@ -16,17 +16,17 @@ func LPop(c helpers.Connection, args []string) (helpers.Value, error) {
 	defer listsMu.Unlock()
 
 	if _, exists := lists[key]; !exists {
-		return helpers.NullBulk{}, nil
+		return resp.NullBulk{}, nil
 	}
 
 	if len(lists[key]) == 0 {
-		return helpers.NullBulk{}, nil
+		return resp.NullBulk{}, nil
 	}
 
 	if len(args) > 1 {
 		amountToPop, err := strconv.Atoi(args[1])
 		if err != nil || amountToPop < 0 {
-			return helpers.Error("value is out of range, must be positive"), nil
+			return resp.Error("value is out of range, must be positive"), nil
 		}
 		poppedValues := []string{}
 
@@ -37,15 +37,15 @@ func LPop(c helpers.Connection, args []string) (helpers.Value, error) {
 			poppedValues = append(poppedValues, poppedValue)
 		}
 
-		response := make(helpers.Array, len(poppedValues))
+		response := make(resp.Array, len(poppedValues))
 		for index, value := range poppedValues {
-			response[index] = helpers.BulkString(value)
+			response[index] = resp.BulkString(value)
 		}
 		return response, nil
 	} else {
 		poppedValue := lists[key][0]
 		lists[key] = lists[key][1:]
 
-		return helpers.BulkString(poppedValue), nil
+		return resp.BulkString(poppedValue), nil
 	}
 }

@@ -3,10 +3,10 @@ package strings
 import (
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Get(c helpers.Connection, args []string) (helpers.Value, error) {
+func Get(c resp.Connection, args []string) (resp.Value, error) {
 	numArgs := len(args)
 	dictionary := GetMap()
 
@@ -18,14 +18,14 @@ func Get(c helpers.Connection, args []string) (helpers.Value, error) {
 				ok = false
 			}
 			if ok {
-				return helpers.BulkString(value.Value), nil
+				return resp.BulkString(value.Value), nil
 			} else {
-				return helpers.NullBulk{}, nil
+				return resp.NullBulk{}, nil
 			}
 		} else {
-			return helpers.NullBulk{}, nil
+			return resp.NullBulk{}, nil
 		}
 	} else {
-		return helpers.Error("wrong number of arguments for 'GET' command"), nil
+		return resp.Error("wrong number of arguments for 'GET' command"), nil
 	}
 }

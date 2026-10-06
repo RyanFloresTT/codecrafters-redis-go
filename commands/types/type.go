@@ -3,7 +3,7 @@ package types
 import (
 	"github.com/codecrafters-io/redis-starter-go/commands/streams"
 	"github.com/codecrafters-io/redis-starter-go/commands/strings"
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
 type Types string
@@ -23,9 +23,9 @@ const (
 	None      Types = "none"
 )
 
-func Type(c helpers.Connection, args []string) (helpers.Value, error) {
+func Type(c resp.Connection, args []string) (resp.Value, error) {
 	if len(args) != 1 {
-		return helpers.Error("wrong number of arguments for 'type' command"), nil
+		return resp.Error("wrong number of arguments for 'type' command"), nil
 	}
 	key := args[0]
 	valueType := None
@@ -38,5 +38,5 @@ func Type(c helpers.Connection, args []string) (helpers.Value, error) {
 		valueType = None
 	}
 
-	return helpers.SimpleString(valueType.String()), nil
+	return resp.SimpleString(valueType.String()), nil
 }

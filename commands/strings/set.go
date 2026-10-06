@@ -4,10 +4,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/commands/optimistic_locking"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Set(c helpers.Connection, args []string) (helpers.Value, error) {
+func Set(c resp.Connection, args []string) (resp.Value, error) {
 	numArgs := len(args)
 	dictionary := GetMap()
 
@@ -15,8 +16,8 @@ func Set(c helpers.Connection, args []string) (helpers.Value, error) {
 	case 2:
 		// Handle the case where only the key and value are provided
 
-		dictionary[args[0]] = entry{Value: args[1]}
-		return helpers.SimpleString("OK"), nil
+		setEntry(dictionary, args[0], args[1], time.Time{})
+		return resp.SimpleString("OK"), nil
 
 	case 4:
 		// Handle the case where key/value and expiration are provided
@@ -25,25 +26,32 @@ func Set(c helpers.Connection, args []string) (helpers.Value, error) {
 		case "EX": // Expiration time in seconds
 			expireSeconds, err := strconv.Atoi(args[3])
 			if err != nil {
-				return helpers.Error("invalid expire time"), nil
+				return resp.Error("invalid expire time"), nil
 			} else {
-				dictionary[args[0]] = entry{Value: args[1], ExpiresAt: time.Now().Add(time.Duration(expireSeconds) * time.Second)}
-				return helpers.SimpleString("OK"), nil
+				setEntry(dictionary, args[0], args[1], time.Now().Add(time.Duration(expireSeconds)*time.Second))
+				return resp.SimpleString("OK"), nil
 			}
 		case "PX": // Expiration time in milliseconds
 			expireMilliseconds, err := strconv.Atoi(args[3])
 			if err != nil {
-				return helpers.Error("invalid expire time"), nil
+				return resp.Error("invalid expire time"), nil
 			} else {
-				dictionary[args[0]] = entry{Value: args[1], ExpiresAt: time.Now().Add(time.Duration(expireMilliseconds) * time.Millisecond)}
-				return helpers.SimpleString("OK"), nil
+				setEntry(dictionary, args[0], args[1], time.Now().Add(time.Duration(expireMilliseconds)*time.Millisecond))
+				return resp.SimpleString("OK"), nil
 			}
 		default:
-			return helpers.Error("syntax error"), nil
+			return resp.Error("syntax error"), nil
 		}
 
 	default:
 		// Handle the default case
-		return helpers.Error("wrong number of arguments for 'SET' command"), nil
+		return resp.Error("wrong number of arguments for 'SET' command"), nil
+	}
+}
+
+func setEntry(dictionary map[string]entry, key string, value string, expiresAt time.Time) {
+	dictionary[key] = entry{Value: value, ExpiresAt: expiresAt}
+	if _, ok := optimistic_locking.WatchedKeys[key]; ok {
+		optimistic_locking.WatchedKeys[key] = true
 	}
 }

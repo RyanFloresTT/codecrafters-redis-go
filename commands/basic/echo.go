@@ -1,9 +1,9 @@
 package basic
 
 import (
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Echo(c helpers.Connection, args []string) (helpers.Value, error) {
-	return helpers.BulkString(args[0]), nil
+func Echo(c resp.Connection, args []string) (resp.Value, error) {
+	return resp.BulkString(args[0]), nil
 }

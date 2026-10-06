@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/helpers"
+	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
 var streamMap = make(map[string][]entry)
@@ -17,9 +17,9 @@ func GetMap() map[string][]entry {
 	return streamMap
 }
 
-func XAdd(c helpers.Connection, args []string) (helpers.Value, error) {
+func XAdd(c resp.Connection, args []string) (resp.Value, error) {
 	if len(args) < 4 || len(args)%2 != 0 {
-		return helpers.Error("wrong number of arguments for 'xadd' command"), nil
+		return resp.Error("wrong number of arguments for 'xadd' command"), nil
 	}
 	key := args[0]
 	idString := args[1]
@@ -48,10 +48,10 @@ func XAdd(c helpers.Connection, args []string) (helpers.Value, error) {
 	}()
 
 	if err := validationErr; err != nil {
-		return helpers.Error(err.Error()), nil
+		return resp.Error(err.Error()), nil
 	}
 
-	return helpers.BulkString(newEntry.id.String()), nil
+	return resp.BulkString(newEntry.id.String()), nil
 }
 
 func GenerateNewId(id *id, lastEntry *entry) {
