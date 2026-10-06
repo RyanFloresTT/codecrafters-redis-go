@@ -14,7 +14,10 @@ func Watch(c resp.Connection, args []string) (resp.Value, error) {
 	if transactions.IsActive(c) {
 		return resp.Error("WATCH inside MULTI is not allowed"), nil
 	}
-	WatchedKeys[args[0]] = false
+
+	for _, key := range args {
+		WatchedKeys[key] = false
+	}
 
 	return resp.SimpleString("OK"), nil
 }
