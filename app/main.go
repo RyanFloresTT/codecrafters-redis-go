@@ -54,8 +54,7 @@ func main() {
 		}
 		defer masterConnection.Close()
 
-		// Perform initial handshake with master
-		resp.Array([]resp.Value{resp.BulkString("PING")}).SendTo(resp.Connection{Conn: masterConnection})
+		handleHandshake(resp.Connection{Conn: masterConnection}, port)
 	}
 
 	for {
@@ -66,5 +65,27 @@ func main() {
 		}
 
 		go handleConnection(c)
+	}
+}
+
+func handleHandshake(connection resp.Connection, port string) {
+	handshakeCommands := []resp.Array{
+		resp.Array([]resp.Value{resp.BulkString("PING")}),
+		resp.Array([]resp.Value{resp.BulkString("REPLCONF"), resp.BulkString("listening-port"), resp.BulkString(port)}),
+		resp.Array([]resp.Value{resp.BulkString("REPLCONF"), resp.BulkString("capa"), resp.BulkString("psync2")}),
+	}
+
+	for _, cmd := range handshakeCommands {
+		cmd.SendTo(connection)
+
+		minBufSize := 1024
+
+		buf := make([]byte, minBufSize)
+
+		_, err := connection.Read(buf)
+		if err != nil {
+			fmt.Println("Error reading from connection: ", err.Error())
+			os.Exit(1)
+		}
 	}
 }
