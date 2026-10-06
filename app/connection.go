@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/codecrafters-io/redis-starter-go/cli/info"
 	"github.com/codecrafters-io/redis-starter-go/commands"
 	"github.com/codecrafters-io/redis-starter-go/commands/replication"
 	"github.com/codecrafters-io/redis-starter-go/commands/transactions"
@@ -30,7 +31,8 @@ func handleMasterConnection(c net.Conn, reader *bufio.Reader) {
 	defer c.Close()
 
 	for {
-		args, err := parseArgs(reader)
+		args, bytesRead, err := parseArgs(reader)
+		fmt.Println(bytesRead)
 		if err != nil {
 			return
 		}
@@ -41,7 +43,7 @@ func handleMasterConnection(c net.Conn, reader *bufio.Reader) {
 			args[2] == "*" {
 
 			connection := resp.Connection{Conn: c}
-			currentOffset := 0 // replication.GetCurrentOffset()
+			currentOffset := 0 + info.Redis.GetOffset()
 			response := resp.Array([]resp.Value{
 				resp.BulkString("REPLCONF"),
 				resp.BulkString("ACK"),
@@ -50,17 +52,19 @@ func handleMasterConnection(c net.Conn, reader *bufio.Reader) {
 			if err := response.SendTo(connection); err != nil {
 				return
 			}
+			info.Redis.AddToOffset(bytesRead)
 			continue
 		}
 
 		if _, err := dispatchCommand(resp.Connection{Conn: c}, args); err != nil {
 			return
 		}
+		info.Redis.AddToOffset(bytesRead)
 	}
 }
 
 func readFromConnection(c net.Conn, reader *bufio.Reader) error {
-	args, err := parseArgs(reader)
+	args, _, err := parseArgs(reader)
 	if err != nil {
 		return err
 	}
@@ -89,45 +93,51 @@ func readRESPLine(reader *bufio.Reader) (string, error) {
 	return strings.TrimSuffix(line, "\r\n"), nil
 }
 
-func parseArgs(reader *bufio.Reader) ([]string, error) {
+func parseArgs(reader *bufio.Reader) ([]string, int, error) {
 	header, err := readRESPLine(reader)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if !strings.HasPrefix(header, "*") {
-		return nil, fmt.Errorf("expected RESP array")
+		return nil, 0, fmt.Errorf("expected RESP array")
 	}
 	count, err := strconv.Atoi(header[1:])
 	if err != nil || count <= 0 {
-		return nil, fmt.Errorf("invalid command array length: %s", header)
+		return nil, 0, fmt.Errorf("invalid command array length: %s", header)
 	}
 	args := make([]string, count)
+	bytesRead := len(header) + 2
 	for index := range args {
 		lengthHeader, err := readRESPLine(reader)
 		if err != nil {
-			return nil, err
+			return nil, bytesRead, err
 		}
+		bytesRead += len(lengthHeader) + 2
 		if !strings.HasPrefix(lengthHeader, "$") {
-			return nil, fmt.Errorf("expected RESP bulk string")
+			return nil, bytesRead, fmt.Errorf("expected RESP bulk string")
 		}
 		length, err := strconv.Atoi(lengthHeader[1:])
 		if err != nil || length < 0 {
-			return nil, fmt.Errorf("invalid bulk string length: %s", lengthHeader)
+			return nil, bytesRead, fmt.Errorf("invalid bulk string length: %s", lengthHeader)
 		}
 		data := make([]byte, length)
-		if _, err := io.ReadFull(reader, data); err != nil {
-			return nil, err
+		if n, err := io.ReadFull(reader, data); err != nil {
+			return nil, bytesRead, err
+		} else {
+			bytesRead += n
 		}
 		var ending [2]byte
-		if _, err := io.ReadFull(reader, ending[:]); err != nil {
-			return nil, err
+		if n, err := io.ReadFull(reader, ending[:]); err != nil {
+			return nil, bytesRead, err
+		} else {
+			bytesRead += n
 		}
 		if string(ending[:]) != "\r\n" {
-			return nil, fmt.Errorf("invalid bulk string ending")
+			return nil, bytesRead, fmt.Errorf("invalid bulk string ending")
 		}
 		args[index] = string(data)
 	}
-	return args, nil
+	return args, bytesRead, nil
 }
 
 func dispatchCommand(connection resp.Connection, args []string) (resp.Value, error) {

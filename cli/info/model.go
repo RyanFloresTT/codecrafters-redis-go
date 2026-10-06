@@ -29,3 +29,11 @@ type Replication struct {
 func (r *Replication) String() string {
 	return fmt.Sprintf("role:%s\nmaster_replid:%s\nmaster_repl_offset:%d\n", r.Role, r.MasterReplID, r.MasterReplOffset)
 }
+
+func (r *RedisInfo) AddToOffset(n int) {
+	r.Replication.MasterReplOffset += n
+}
+
+func (r *RedisInfo) GetOffset() int {
+	return r.Replication.MasterReplOffset
+}
