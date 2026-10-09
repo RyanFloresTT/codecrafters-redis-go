@@ -1,6 +1,8 @@
 package info
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var Redis = RedisInfo{
 	Port: 6379,

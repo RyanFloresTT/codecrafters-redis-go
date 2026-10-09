@@ -1,6 +1,10 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/resp"
+import (
+	"strconv"
+
+	"github.com/codecrafters-io/redis-starter-go/resp"
+)
 
 type Command struct {
 	Name              string
@@ -34,4 +38,19 @@ func (c Command) ToReplicaCommand() ReplicaCommand {
 	}
 
 	return ReplicaCommand{values}
+}
+
+func (r ReplicaCommand) ByteLength() int {
+	length := 0
+	for _, value := range r.CommandRESP {
+		switch v := value.(type) {
+		case resp.BulkString:
+			length += len(string(v))
+		case resp.SimpleString:
+			length += len(string(v))
+		case resp.Integer:
+			length += len(strconv.FormatInt(int64(v), 10))
+		}
+	}
+	return length
 }

@@ -15,6 +15,11 @@ type NullArray struct{}
 type Error string
 type File string
 type CommandArray []Value
+type NothingValue string
+
+func Nothing() NothingValue {
+	return NothingValue("")
+}
 
 func (commands CommandArray) SendTo(c Connection) error {
 	for _, command := range commands {
@@ -64,4 +69,8 @@ func (message Error) SendTo(c Connection) error {
 
 func (contents File) SendTo(c Connection) error {
 	return c.SendFile(string(contents))
+}
+
+func (e NothingValue) SendTo(c Connection) error {
+	return nil
 }

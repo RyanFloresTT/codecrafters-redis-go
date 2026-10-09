@@ -53,18 +53,20 @@ func handleMasterConnection(c net.Conn, reader *bufio.Reader) {
 				return
 			}
 			info.Redis.AddToOffset(bytesRead)
+			replication.SetReplicaOffset(connection, currentOffset)
 			continue
 		}
 
-		if _, err := dispatchCommand(resp.Connection{Conn: c}, args); err != nil {
+		if _, err := dispatchCommand(resp.Connection{Conn: c}, args, bytesRead); err != nil {
 			return
 		}
 		info.Redis.AddToOffset(bytesRead)
+		replication.SetReplicaOffset(resp.Connection{Conn: c}, info.Redis.GetOffset())
 	}
 }
 
 func readFromConnection(c net.Conn, reader *bufio.Reader) error {
-	args, _, err := parseArgs(reader)
+	args, bytesRead, err := parseArgs(reader)
 	if err != nil {
 		return err
 	}
@@ -74,7 +76,7 @@ func readFromConnection(c net.Conn, reader *bufio.Reader) error {
 		return connection.SendError("empty command")
 	}
 
-	response, err := dispatchCommand(connection, args)
+	response, err := dispatchCommand(connection, args, bytesRead)
 	if err != nil {
 		return err
 	}
@@ -140,7 +142,7 @@ func parseArgs(reader *bufio.Reader) ([]string, int, error) {
 	return args, bytesRead, nil
 }
 
-func dispatchCommand(connection resp.Connection, args []string) (resp.Value, error) {
+func dispatchCommand(connection resp.Connection, args []string, bytesRead int) (resp.Value, error) {
 	name := strings.ToUpper(args[0])
 	command, ok := commands.Registry[name]
 	if !ok {
@@ -166,6 +168,8 @@ func dispatchCommand(connection resp.Connection, args []string) (resp.Value, err
 		go func() {
 			replicaCommand := command.ToReplicaCommand()
 			replicaCommand.SendTo(replica)
+
+			info.Redis.AddToOffset(replicaCommand.ByteLength())
 		}()
 	}
 	return response, nil
