@@ -7,6 +7,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/commands/lists"
 	"github.com/codecrafters-io/redis-starter-go/commands/numbers"
 	"github.com/codecrafters-io/redis-starter-go/commands/optimistic_locking"
+	"github.com/codecrafters-io/redis-starter-go/commands/rdb"
 	"github.com/codecrafters-io/redis-starter-go/commands/replication"
 	"github.com/codecrafters-io/redis-starter-go/commands/streams"
 	"github.com/codecrafters-io/redis-starter-go/commands/strings"
@@ -39,6 +40,7 @@ var Registry = map[string]Command{
 	"REPLCONF": {Name: "REPLCONF", Execute: replication.ReplConf},
 	"PSYNC":    {Name: "PSYNC", Execute: replication.Psync},
 	"WAIT":     {Name: "WAIT", Execute: replication.Wait},
+	"CONFIG":   {Name: "CONFIG", Execute: rdb.ConfigCommand},
 }
 
 var CLI = map[string]CLICommand{

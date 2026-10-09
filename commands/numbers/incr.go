@@ -7,9 +7,9 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Incr(c resp.Connection, args []string) (resp.Value, error) {
+func Incr(c resp.Connection, args []string) resp.Value {
 	if len(args) != 1 {
-		return resp.Error("wrong number of arguments for 'incr' command"), nil
+		return resp.Error("wrong number of arguments for 'incr' command")
 	}
 	entry, ok := strings.GetEntry(args[0])
 
@@ -17,13 +17,13 @@ func Incr(c resp.Connection, args []string) (resp.Value, error) {
 		entry := strings.Entry()
 		entry.Value = "1"
 		strings.GetMap()[args[0]] = entry
-		return resp.Integer(1), nil
+		return resp.Integer(1)
 	}
 
 	value, err := strconv.Atoi(entry.Value)
 
 	if err != nil {
-		return resp.Error("value is not an integer or out of range"), nil
+		return resp.Error("value is not an integer or out of range")
 	}
 
 	data := resp.Integer(value + 1)
@@ -31,5 +31,5 @@ func Incr(c resp.Connection, args []string) (resp.Value, error) {
 
 	strings.GetMap()[args[0]] = entry
 
-	return data, nil
+	return data
 }

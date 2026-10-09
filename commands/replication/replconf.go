@@ -7,7 +7,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func ReplConf(c resp.Connection, args []string) (resp.Value, error) {
+func ReplConf(c resp.Connection, args []string) resp.Value {
 	if args[0] == "GETACK" && args[1] == "*" {
 		response := resp.Array([]resp.Value{
 			resp.BulkString("REPLCONF "),
@@ -15,16 +15,16 @@ func ReplConf(c resp.Connection, args []string) (resp.Value, error) {
 			resp.BulkString(strconv.Itoa(info.Redis.GetOffset())),
 		})
 
-		return response, nil
+		return response
 	}
 
 	if args[0] == "ACK" {
 		replicaOffset, err := strconv.Atoi(args[1])
 		if err != nil {
-			return resp.SimpleString("ERR invalid ACK offset"), nil
+			return resp.SimpleString("ERR invalid ACK offset")
 		}
 		SetReplicaOffset(c, replicaOffset)
-		return resp.Nothing(), nil
+		return resp.Nothing()
 	}
-	return resp.SimpleString("OK"), nil
+	return resp.SimpleString("OK")
 }

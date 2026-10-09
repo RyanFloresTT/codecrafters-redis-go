@@ -5,11 +5,11 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Exec(c resp.Connection, args []string) (resp.Value, error) {
+func Exec(c resp.Connection, args []string) resp.Value {
 	for _, wasModified := range state.WatchedKeys {
 		if wasModified {
 			Discard(c, nil)
-			return resp.NullArray{}, nil
+			return resp.NullArray{}
 		}
 	}
 
@@ -18,16 +18,13 @@ func Exec(c resp.Connection, args []string) (resp.Value, error) {
 	delete(clients, c.RemoteAddr())
 	clientsMu.Unlock()
 	if transaction == nil {
-		return resp.Error("EXEC without MULTI"), nil
+		return resp.Error("EXEC without MULTI")
 	}
 
 	data := make(resp.Array, 0, len(transaction.commands))
 	for _, command := range transaction.commands {
-		response, err := command.execute(c, command.args)
-		if err != nil {
-			return nil, err
-		}
+		response := command.execute(c, command.args)
 		data = append(data, response)
 	}
-	return data, nil
+	return data
 }

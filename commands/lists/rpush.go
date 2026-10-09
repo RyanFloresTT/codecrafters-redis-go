@@ -10,9 +10,9 @@ var lists = make(map[string][]string)
 var listsMu sync.Mutex
 var listCond = sync.Cond{L: &listsMu}
 
-func RPush(c resp.Connection, args []string) (resp.Value, error) {
+func RPush(c resp.Connection, args []string) resp.Value {
 	if len(args) < 2 {
-		return resp.Error("wrong number of arguments for 'rpush' command"), nil
+		return resp.Error("wrong number of arguments for 'rpush' command")
 	}
 	key := args[0]
 	values := args[1:]
@@ -24,5 +24,5 @@ func RPush(c resp.Connection, args []string) (resp.Value, error) {
 	length := len(lists[key])
 
 	listCond.Broadcast()
-	return resp.Integer(length), nil
+	return resp.Integer(length)
 }

@@ -17,9 +17,9 @@ func GetMap() map[string][]entry {
 	return streamMap
 }
 
-func XAdd(c resp.Connection, args []string) (resp.Value, error) {
+func XAdd(c resp.Connection, args []string) resp.Value {
 	if len(args) < 4 || len(args)%2 != 0 {
-		return resp.Error("wrong number of arguments for 'xadd' command"), nil
+		return resp.Error("wrong number of arguments for 'xadd' command")
 	}
 	key := args[0]
 	idString := args[1]
@@ -48,10 +48,10 @@ func XAdd(c resp.Connection, args []string) (resp.Value, error) {
 	}()
 
 	if err := validationErr; err != nil {
-		return resp.Error(err.Error()), nil
+		return resp.Error(err.Error())
 	}
 
-	return resp.BulkString(newEntry.id.String()), nil
+	return resp.BulkString(newEntry.id.String())
 }
 
 func GenerateNewId(id *id, lastEntry *entry) {

@@ -6,7 +6,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Get(c resp.Connection, args []string) (resp.Value, error) {
+func Get(c resp.Connection, args []string) resp.Value {
 	numArgs := len(args)
 	dictionary := GetMap()
 
@@ -18,14 +18,14 @@ func Get(c resp.Connection, args []string) (resp.Value, error) {
 				ok = false
 			}
 			if ok {
-				return resp.BulkString(value.Value), nil
+				return resp.BulkString(value.Value)
 			} else {
-				return resp.NullBulk{}, nil
+				return resp.NullBulk{}
 			}
 		} else {
-			return resp.NullBulk{}, nil
+			return resp.NullBulk{}
 		}
 	} else {
-		return resp.Error("wrong number of arguments for 'GET' command"), nil
+		return resp.Error("wrong number of arguments for 'GET' command")
 	}
 }

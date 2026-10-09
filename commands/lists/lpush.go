@@ -2,9 +2,9 @@ package lists
 
 import "github.com/codecrafters-io/redis-starter-go/resp"
 
-func LPush(c resp.Connection, args []string) (resp.Value, error) {
+func LPush(c resp.Connection, args []string) resp.Value {
 	if len(args) < 2 {
-		return resp.Error("wrong number of arguments for 'lpush' command"), nil
+		return resp.Error("wrong number of arguments for 'lpush' command")
 	}
 
 	key := args[0]
@@ -18,5 +18,5 @@ func LPush(c resp.Connection, args []string) (resp.Value, error) {
 	}
 
 	listCond.Broadcast()
-	return resp.Integer(len(lists[key])), nil
+	return resp.Integer(len(lists[key]))
 }

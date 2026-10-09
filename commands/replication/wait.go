@@ -8,7 +8,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Wait(c resp.Connection, args []string) (resp.Value, error) {
+func Wait(c resp.Connection, args []string) resp.Value {
 	numReplicas, _ := strconv.Atoi(args[0])
 	timeout, _ := strconv.Atoi(args[1])
 
@@ -16,7 +16,7 @@ func Wait(c resp.Connection, args []string) (resp.Value, error) {
 	deadline := time.Now().Add(time.Duration(timeout) * time.Millisecond)
 	getReplicaOffsets()
 
-	return resp.Integer(waitForReplicaAcks(targetOffset, numReplicas, deadline)), nil
+	return resp.Integer(waitForReplicaAcks(targetOffset, numReplicas, deadline))
 }
 
 func getReplicaOffsets() {

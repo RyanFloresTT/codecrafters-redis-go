@@ -155,10 +155,7 @@ func dispatchCommand(connection resp.Connection, args []string, bytesRead int) (
 	}
 
 	command.Args = args[1:]
-	response, err := command.Execute(connection, args[1:])
-	if err != nil {
-		return nil, err
-	}
+	response := command.Execute(connection, args[1:])
 
 	// kinda don't like this here, as this is called even on replicas, even though it will be empty for them
 	for _, replica := range replication.GetReplicas() {

@@ -17,21 +17,21 @@ var (
 	clients   = make(map[net.Addr]*clientTransaction)
 )
 
-type CommandFunc func(resp.Connection, []string) (resp.Value, error)
+type CommandFunc func(resp.Connection, []string) resp.Value
 
 type queuedCommand struct {
 	execute CommandFunc
 	args    []string
 }
 
-func Multi(c resp.Connection, args []string) (resp.Value, error) {
+func Multi(c resp.Connection, args []string) resp.Value {
 	clientsMu.Lock()
 	clients[c.RemoteAddr()] = &clientTransaction{}
 	clientsMu.Unlock()
-	return resp.SimpleString("OK"), nil
+	return resp.SimpleString("OK")
 }
 
-func Discard(c resp.Connection, args []string) (resp.Value, error) {
+func Discard(c resp.Connection, args []string) resp.Value {
 	clientsMu.Lock()
 	defer clientsMu.Unlock()
 
@@ -39,10 +39,10 @@ func Discard(c resp.Connection, args []string) (resp.Value, error) {
 
 	if _, ok := clients[c.RemoteAddr()]; ok {
 		delete(clients, c.RemoteAddr())
-		return resp.SimpleString("OK"), nil
+		return resp.SimpleString("OK")
 	}
 
-	return resp.Error("DISCARD without MULTI"), nil
+	return resp.Error("DISCARD without MULTI")
 }
 
 func IsActive(c resp.Connection) bool {

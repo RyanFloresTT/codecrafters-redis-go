@@ -6,9 +6,9 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func LPop(c resp.Connection, args []string) (resp.Value, error) {
+func LPop(c resp.Connection, args []string) resp.Value {
 	if len(args) == 0 || len(args) > 2 {
-		return resp.Error("wrong number of arguments for 'lpop' command"), nil
+		return resp.Error("wrong number of arguments for 'lpop' command")
 	}
 	key := args[0]
 
@@ -16,17 +16,17 @@ func LPop(c resp.Connection, args []string) (resp.Value, error) {
 	defer listsMu.Unlock()
 
 	if _, exists := lists[key]; !exists {
-		return resp.NullBulk{}, nil
+		return resp.NullBulk{}
 	}
 
 	if len(lists[key]) == 0 {
-		return resp.NullBulk{}, nil
+		return resp.NullBulk{}
 	}
 
 	if len(args) > 1 {
 		amountToPop, err := strconv.Atoi(args[1])
 		if err != nil || amountToPop < 0 {
-			return resp.Error("value is out of range, must be positive"), nil
+			return resp.Error("value is out of range, must be positive")
 		}
 		poppedValues := []string{}
 
@@ -41,11 +41,11 @@ func LPop(c resp.Connection, args []string) (resp.Value, error) {
 		for index, value := range poppedValues {
 			response[index] = resp.BulkString(value)
 		}
-		return response, nil
+		return response
 	} else {
 		poppedValue := lists[key][0]
 		lists[key] = lists[key][1:]
 
-		return resp.BulkString(poppedValue), nil
+		return resp.BulkString(poppedValue)
 	}
 }

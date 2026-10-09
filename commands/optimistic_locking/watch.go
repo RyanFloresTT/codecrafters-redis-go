@@ -12,23 +12,23 @@ import (
 // False by default, indicating that the key has not been modified.
 var WatchedKeys = state.WatchedKeys
 
-func Watch(c resp.Connection, args []string) (resp.Value, error) {
+func Watch(c resp.Connection, args []string) resp.Value {
 	if transactions.IsActive(c) {
-		return resp.Error("WATCH inside MULTI is not allowed"), nil
+		return resp.Error("WATCH inside MULTI is not allowed")
 	}
 
 	for _, key := range args {
 		WatchedKeys[key] = false
 	}
 
-	return resp.SimpleString("OK"), nil
+	return resp.SimpleString("OK")
 }
 
-func Unwatch(c resp.Connection, args []string) (resp.Value, error) {
+func Unwatch(c resp.Connection, args []string) resp.Value {
 	fmt.Println(len(WatchedKeys))
 
 	for key := range WatchedKeys {
 		delete(WatchedKeys, key)
 	}
-	return resp.SimpleString("OK"), nil
+	return resp.SimpleString("OK")
 }

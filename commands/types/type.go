@@ -23,9 +23,9 @@ const (
 	None      Types = "none"
 )
 
-func Type(c resp.Connection, args []string) (resp.Value, error) {
+func Type(c resp.Connection, args []string) resp.Value {
 	if len(args) != 1 {
-		return resp.Error("wrong number of arguments for 'type' command"), nil
+		return resp.Error("wrong number of arguments for 'type' command")
 	}
 	key := args[0]
 	valueType := None
@@ -38,5 +38,5 @@ func Type(c resp.Connection, args []string) (resp.Value, error) {
 		valueType = None
 	}
 
-	return resp.SimpleString(valueType.String()), nil
+	return resp.SimpleString(valueType.String())
 }

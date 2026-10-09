@@ -7,14 +7,14 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func BLPop(c resp.Connection, args []string) (resp.Value, error) {
+func BLPop(c resp.Connection, args []string) resp.Value {
 	if len(args) != 2 {
-		return resp.Error("wrong number of arguments for 'blpop' command"), nil
+		return resp.Error("wrong number of arguments for 'blpop' command")
 	}
 	key := args[0]
 	timeoutSeconds, err := strconv.ParseFloat(args[1], 64)
 	if err != nil || timeoutSeconds < 0 {
-		return resp.Error("timeout is not a float or out of range"), nil
+		return resp.Error("timeout is not a float or out of range")
 	}
 
 	timedOut := false
@@ -36,11 +36,11 @@ func BLPop(c resp.Connection, args []string) (resp.Value, error) {
 		listCond.Wait()
 	}
 	if len(lists[key]) == 0 {
-		return resp.NullArray{}, nil
+		return resp.NullArray{}
 	}
 
 	poppedValue := lists[key][0]
 	lists[key] = lists[key][1:]
 
-	return resp.Array{resp.BulkString(key), resp.BulkString(poppedValue)}, nil
+	return resp.Array{resp.BulkString(key), resp.BulkString(poppedValue)}
 }

@@ -4,7 +4,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Llen(c resp.Connection, args []string) (resp.Value, error) {
+func Llen(c resp.Connection, args []string) resp.Value {
 	key := args[0]
 
 	listsMu.Lock()
@@ -12,5 +12,5 @@ func Llen(c resp.Connection, args []string) (resp.Value, error) {
 
 	length := len(lists[key])
 
-	return resp.Integer(length), nil
+	return resp.Integer(length)
 }

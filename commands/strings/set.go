@@ -8,7 +8,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func Set(c resp.Connection, args []string) (resp.Value, error) {
+func Set(c resp.Connection, args []string) resp.Value {
 	numArgs := len(args)
 	dictionary := GetMap()
 
@@ -17,7 +17,7 @@ func Set(c resp.Connection, args []string) (resp.Value, error) {
 		// Handle the case where only the key and value are provided
 
 		setEntry(dictionary, args[0], args[1], time.Time{})
-		return resp.SimpleString("OK"), nil
+		return resp.SimpleString("OK")
 
 	case 4:
 		// Handle the case where key/value and expiration are provided
@@ -26,26 +26,26 @@ func Set(c resp.Connection, args []string) (resp.Value, error) {
 		case "EX": // Expiration time in seconds
 			expireSeconds, err := strconv.Atoi(args[3])
 			if err != nil {
-				return resp.Error("invalid expire time"), nil
+				return resp.Error("invalid expire time")
 			} else {
 				setEntry(dictionary, args[0], args[1], time.Now().Add(time.Duration(expireSeconds)*time.Second))
-				return resp.SimpleString("OK"), nil
+				return resp.SimpleString("OK")
 			}
 		case "PX": // Expiration time in milliseconds
 			expireMilliseconds, err := strconv.Atoi(args[3])
 			if err != nil {
-				return resp.Error("invalid expire time"), nil
+				return resp.Error("invalid expire time")
 			} else {
 				setEntry(dictionary, args[0], args[1], time.Now().Add(time.Duration(expireMilliseconds)*time.Millisecond))
-				return resp.SimpleString("OK"), nil
+				return resp.SimpleString("OK")
 			}
 		default:
-			return resp.Error("syntax error"), nil
+			return resp.Error("syntax error")
 		}
 
 	default:
 		// Handle the default case
-		return resp.Error("wrong number of arguments for 'SET' command"), nil
+		return resp.Error("wrong number of arguments for 'SET' command")
 	}
 }
 

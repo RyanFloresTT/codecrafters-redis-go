@@ -8,9 +8,9 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/resp"
 )
 
-func XRead(c resp.Connection, args []string) (resp.Value, error) {
+func XRead(c resp.Connection, args []string) resp.Value {
 	if len(args) < 3 || (len(args)-1)%2 != 0 {
-		return resp.Error("wrong number of arguments for 'xread' command"), nil
+		return resp.Error("wrong number of arguments for 'xread' command")
 	}
 
 	timeToBlockMillis := int64(0)
@@ -21,13 +21,13 @@ func XRead(c resp.Connection, args []string) (resp.Value, error) {
 		var err error
 		timeToBlockMillis, err = strconv.ParseInt(args[1], 10, 64)
 		if err != nil || timeToBlockMillis < 0 {
-			return resp.Error("timeout is not an integer or out of range"), nil
+			return resp.Error("timeout is not an integer or out of range")
 		}
 
 		args = args[2:]
 	}
 	if len(args) < 3 || !strings.EqualFold(args[0], "STREAMS") || (len(args)-1)%2 != 0 {
-		return resp.Error("syntax error"), nil
+		return resp.Error("syntax error")
 	}
 
 	numOfStreams := (len(args) - 1) / 2
@@ -49,7 +49,7 @@ func XRead(c resp.Connection, args []string) (resp.Value, error) {
 	}
 
 	var response resp.Array
-	var readErr error
+
 	func() {
 		mapMu.Lock()
 		defer mapMu.Unlock()
@@ -65,10 +65,7 @@ func XRead(c resp.Connection, args []string) (resp.Value, error) {
 		}
 
 		for {
-			response, readErr = collectMatches(keys, ids)
-			if readErr != nil {
-				return
-			}
+			response = collectMatches(keys, ids)
 
 			if len(response) > 0 || !blocking || timeout {
 				return
@@ -78,24 +75,20 @@ func XRead(c resp.Connection, args []string) (resp.Value, error) {
 		}
 	}()
 
-	if readErr != nil {
-		return resp.Error(readErr.Error()), nil
-	}
-
 	if len(response) == 0 {
-		return resp.NullArray{}, nil
+		return resp.NullArray{}
 	}
 
-	return response, nil
+	return response
 }
 
-func collectMatches(keys []string, ids []string) (resp.Array, error) {
+func collectMatches(keys []string, ids []string) resp.Array {
 	response := resp.Array{}
 
 	for index, key := range keys {
 		start, _, err := tryParseRangeID(ids[index])
 		if err != nil {
-			return nil, err
+			return nil
 		}
 
 		data := resp.Array{}
@@ -111,5 +104,5 @@ func collectMatches(keys []string, ids []string) (resp.Array, error) {
 		}
 	}
 
-	return response, nil
+	return response
 }

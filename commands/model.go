@@ -8,7 +8,7 @@ import (
 
 type Command struct {
 	Name              string
-	Execute           func(connection resp.Connection, args []string) (resp.Value, error)
+	Execute           func(connection resp.Connection, args []string) resp.Value
 	Args              []string
 	IsExemptFromQueue bool
 	Replicates        bool
