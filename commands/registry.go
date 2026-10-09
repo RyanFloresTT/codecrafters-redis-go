@@ -44,6 +44,8 @@ var Registry = map[string]Command{
 }
 
 var CLI = map[string]CLICommand{
-	"PORT":      {Name: "PORT", Execute: cli.Port},
-	"REPLICAOF": {Name: "REPLICAOF", Execute: cli.ReplicaOf},
+	"PORT":       {Name: "PORT", Execute: cli.Port},
+	"REPLICAOF":  {Name: "REPLICAOF", Execute: cli.ReplicaOf},
+	"DIR":        {Name: "DIR", Execute: rdb.SetDirCommand},
+	"DBFILENAME": {Name: "DBFILENAME", Execute: rdb.SetDbFileNameCommand},
 }

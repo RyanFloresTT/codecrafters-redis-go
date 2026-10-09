@@ -13,13 +13,13 @@ func ConfigCommand(c resp.Connection, args []string) resp.Value {
 		searchValue := args[1]
 
 		if searchValue == "dir" {
-			return resp.CommandArray{
+			return resp.Array{
 				resp.BulkString("dir"),
 				resp.BulkString(RDBConfig.Dir),
 			}
 		}
 		if searchValue == "dbfilename" {
-			return resp.CommandArray{
+			return resp.Array{
 				resp.BulkString("dbfilename"),
 				resp.BulkString(RDBConfig.DbFileName),
 			}
@@ -31,4 +31,14 @@ func ConfigCommand(c resp.Connection, args []string) resp.Value {
 	}
 
 	return resp.Error("unsupported CONFIG command")
+}
+
+func SetDirCommand(args []string) error {
+	RDBConfig.Dir = args[0]
+	return nil
+}
+
+func SetDbFileNameCommand(args []string) error {
+	RDBConfig.DbFileName = args[0]
+	return nil
 }
